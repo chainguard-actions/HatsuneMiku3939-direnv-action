@@ -1,0 +1,229 @@
+import * as core from '@actions/core';
+import * as tc from '@actions/tool-cache';
+import * as exec from '@actions/exec';
+import * as cache from '@actions/cache';
+
+import { platform, arch } from 'node:process';
+import { pathToFileURL } from 'node:url';
+
+const ENV_VAR_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+export function direnvBinaryURL(version, platform, arch) {
+  const baseurl = `https://github.com/direnv/direnv/releases/download/v${version}/direnv`;
+
+  // supported arch: x64, arm64
+  // supported platform: linux, darwin
+  const supportedArch = ['x64', 'arm64'];
+  const supportedPlatform = ['linux', 'darwin'];
+
+  if (!supportedArch.includes(arch)) {
+    throw new Error(`unsupported arch: ${arch}`);
+  }
+
+  if (!supportedPlatform.includes(platform)) {
+    throw new Error(`unsupported platform: ${platform}`);
+  }
+
+  const archPlatform = `${platform}-${arch}`;
+
+  switch (archPlatform) {
+    case 'linux-x64':
+      return `${baseurl}.linux-amd64`;
+    case 'linux-arm64':
+      return `${baseurl}.linux-arm64`;
+    case 'darwin-x64':
+      return `${baseurl}.darwin-amd64`;
+    case 'darwin-arm64':
+      return `${baseurl}.darwin-arm64`;
+    default:
+      throw new Error(`unsupported platform: ${archPlatform}`);
+  }
+}
+
+// internal functions
+export async function installTools() {
+  const direnvVersion = core.getInput('direnvVersion');
+  core.info(`installing direnv-${direnvVersion} on ${platform}-${arch}`);
+
+  // test direnv in cache
+  const foundToolCache = tc.find('direnv', direnvVersion);
+  if (foundToolCache) {
+    core.info('direnv found in tool-cache');
+    core.addPath(foundToolCache);
+  } else {
+    const workspace = process.env['GITHUB_WORKSPACE'];
+    const key = `hatsunemiku3939-direnv-action-toolcache-${direnvVersion}-${platform}-${arch}`;
+    const paths = [`${workspace}/.direnv-action`];
+    const restoreKeys = [key];
+
+    // restore from cache
+    core.info('direnv not found in tool-cache, restoring from cache...');
+    const cacheKey = await cache.restoreCache(paths.slice(), key, restoreKeys);
+    if (cacheKey) {
+      core.info(`direnv restored from cache, key: ${cacheKey}`);
+
+      // save tool-cache
+      core.info(`saving to tool-cache...`);
+      const cachedPath = await tc.cacheFile(`${workspace}/.direnv-action/direnv`, 'direnv', 'direnv', direnvVersion);
+
+      // add to path
+      core.addPath(cachedPath);
+
+      // clear
+      await exec.exec('rm', [`-rf`, `${workspace}/.direnv-action`]);
+    } else {
+      const dlUrl = direnvBinaryURL(direnvVersion, platform, arch);
+      core.info(`direnv not found in cache, installing ${dlUrl} ...`);
+      const installPath = await tc.downloadTool(dlUrl);
+
+      // set permissions
+      core.info(`direnv installed ${installPath}, setting permissions...`);
+      await exec.exec('chmod', ['+x', installPath]);
+
+      // rename to direnv
+      core.info(`renaming executable to direnv...`);
+      await exec.exec('mkdir', [`${workspace}/.direnv-action`]);
+      await exec.exec('cp', [installPath, `${workspace}/.direnv-action/direnv`]);
+
+      // save to cache
+      core.info(`saving to cache...`);
+      await cache.saveCache(paths, key);
+
+      // save tool-cache
+      core.info(`saving to tool-cache...`);
+      const cachedPath = await tc.cacheFile(installPath, 'direnv', 'direnv', direnvVersion);
+
+      // add to path
+      core.addPath(cachedPath);
+
+      // clear
+      await exec.exec('rm', [`-rf`, `${workspace}/.direnv-action`]);
+    }
+  }
+}
+
+export async function allowEnvrc(path) {
+  core.info('allowing envrc...');
+  await exec.exec(`direnv`, ['allow', path]);
+}
+
+export async function exportEnvrc(path) {
+  let outputBuffer = '';
+  const options = {};
+  options.listeners = {
+    stdout: (data) => {
+      outputBuffer += data.toString();
+    }
+  };
+  options.cwd = path;
+  options.silent = true;
+
+  core.info('exporting envrc...');
+  await exec.exec(`direnv`, ['export', 'json'], options);
+  return JSON.parse(outputBuffer);
+}
+
+export async function setMasks(envs) {
+  const rawMaskList = core.getInput('masks');
+  const maskList = rawMaskList.split(',').map(function (mask) {
+    return mask.trim();
+  });
+  core.info(`setting masks: ${maskList.join(', ')}`);
+
+  maskList.forEach(function (mask) {
+    const value = envs[mask];
+    if (value) {
+      core.setSecret(value);
+    }
+  });
+}
+
+export function logExportedEnvVars(envs) {
+  const names = Object.keys(envs).sort();
+
+  if (names.length === 0) {
+    core.info('no environment variables exported from .envrc');
+    return;
+  }
+
+  core.info(`exported environment variables: ${names.join(', ')}`);
+}
+
+export function parseRequiredEnvVarNames(rawRequiredList) {
+  const requiredNames = rawRequiredList
+    .split(/\r?\n/)
+    .map((name) => name.trim())
+    .filter((name) => name.length > 0);
+  const invalidNames = requiredNames.filter((name) => !ENV_VAR_NAME_PATTERN.test(name));
+
+  if (invalidNames.length > 0) {
+    throw new Error(`Invalid required environment variable names: ${invalidNames.join(', ')}`);
+  }
+
+  return [...new Set(requiredNames)];
+}
+
+export function validateRequiredEnvVars(envs, requiredNames) {
+  const missingNames = requiredNames.filter((name) => !Object.prototype.hasOwnProperty.call(envs, name));
+
+  if (missingNames.length > 0) {
+    throw new Error(`Missing required environment variables: ${missingNames.join(', ')}`);
+  }
+}
+
+export function applyEnvVars(envs) {
+  Object.keys(envs).forEach(function (name) {
+    const value = envs[name];
+
+    if (name === 'PATH') {
+      core.info('detected PATH in .envrc, appending to PATH...');
+      core.addPath(value);
+    } else {
+      core.exportVariable(name, value);
+    }
+  });
+}
+
+export function errorMessage(error) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
+}
+
+// action entrypoint
+export async function main() {
+  const path = core.getInput('path');
+  try {
+    // install direnv
+    await installTools();
+
+    // allow given envrc
+    await allowEnvrc(path);
+
+    // export envrc to json
+    const envs = await exportEnvrc(path);
+
+    // log exported variable names without printing values
+    logExportedEnvVars(envs);
+
+    // fail early when required exported variables are missing
+    const requiredNames = parseRequiredEnvVarNames(core.getInput('required'));
+    validateRequiredEnvVars(envs, requiredNames);
+
+    // set envs
+    applyEnvVars(envs);
+
+    // set masks
+    await setMasks(envs);
+  }
+  catch (error) {
+    core.setFailed(errorMessage(error));
+  }
+}
+
+// run action
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
+}
