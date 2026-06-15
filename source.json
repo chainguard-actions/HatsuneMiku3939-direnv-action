@@ -1,6 +1,11 @@
 {
   "owner": "HatsuneMiku3939",
   "repo": "direnv-action",
-  "version": "",
-  "url": "https://github.com/HatsuneMiku3939/direnv-action"
+  "version": "v1.3.5",
+  "commit_sha": "fe6ca688de409566c44001c1e65ad6925f0e9cbb",
+  "url": "https://github.com/HatsuneMiku3939/direnv-action",
+  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
+  "test_agent_version": "1",
+  "harden_agent_version": "1"
 }
