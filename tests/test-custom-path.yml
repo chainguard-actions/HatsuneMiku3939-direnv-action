@@ -1,0 +1,32 @@
+name: Test direnv with custom path (child directory)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          masks: ''
+          path: ${{ github.workspace }}/child
+
+      - name: Assert CHILD_ENV is exported from child .envrc
+        run: |
+          echo "CHILD_ENV=$CHILD_ENV"
+          if [ "$CHILD_ENV" != "DEFINED_IN_CHILD_DIRECTORY" ]; then
+            echo "FAIL: expected CHILD_ENV=DEFINED_IN_CHILD_DIRECTORY, got '$CHILD_ENV'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert parent env vars are also exported (via source_up)
+        run: |
+          echo "DIRENV_ACTION_TEST=$DIRENV_ACTION_TEST"
+          if [ "$DIRENV_ACTION_TEST" != "HatsuneMiku3939" ]; then
+            echo "FAIL: expected DIRENV_ACTION_TEST=HatsuneMiku3939, got '$DIRENV_ACTION_TEST'"
+            exit 1
+          fi
+          echo "PASS"

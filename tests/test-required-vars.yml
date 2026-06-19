@@ -1,0 +1,43 @@
+name: Test direnv required environment variables
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          masks: ''
+          required: |
+            DIRENV_ACTION_TEST
+            SECRET1
+            SECRET2
+          path: ${{ github.workspace }}
+
+      - name: Assert action succeeded and required vars are exported
+        run: |
+          echo "DIRENV_ACTION_TEST=$DIRENV_ACTION_TEST"
+          if [ "$DIRENV_ACTION_TEST" != "HatsuneMiku3939" ]; then
+            echo "FAIL: expected DIRENV_ACTION_TEST=HatsuneMiku3939, got '$DIRENV_ACTION_TEST'"
+            exit 1
+          fi
+          echo "PASS: DIRENV_ACTION_TEST is correctly set"
+
+      - name: Assert SECRET1 is exported (was required)
+        run: |
+          if [ "$SECRET1" != "ULTRA_SECRET1" ]; then
+            echo "FAIL: expected SECRET1=ULTRA_SECRET1, got '$SECRET1'"
+            exit 1
+          fi
+          echo "PASS: SECRET1 is correctly set"
+
+      - name: Assert SECRET2 is exported (was required)
+        run: |
+          if [ "$SECRET2" != "VERY_SECRET2" ]; then
+            echo "FAIL: expected SECRET2=VERY_SECRET2, got '$SECRET2'"
+            exit 1
+          fi
+          echo "PASS: SECRET2 is correctly set"
