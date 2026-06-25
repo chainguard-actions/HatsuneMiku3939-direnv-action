@@ -1,0 +1,36 @@
+name: Test direnv masks
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create .envrc file
+        run: |
+          cat > "$GITHUB_WORKSPACE/.envrc" << 'EOF'
+          export SECRET_TOKEN=supersecret123
+          export PUBLIC_VAR=visible_value
+          EOF
+      - id: action
+        uses: .
+        with:
+          masks: 'SECRET_TOKEN'
+          direnvVersion: '2.37.1'
+          path: .
+      - name: Assert SECRET_TOKEN is exported (masked but available)
+        run: |
+          echo "SECRET_TOKEN is set: $([ -n "$SECRET_TOKEN" ] && echo yes || echo no)"
+          if [ "$SECRET_TOKEN" != "supersecret123" ]; then
+            echo "FAIL: expected SECRET_TOKEN='supersecret123', got '$SECRET_TOKEN'"
+            exit 1
+          fi
+          echo "PASS: SECRET_TOKEN is available"
+      - name: Assert PUBLIC_VAR is exported
+        run: |
+          echo "PUBLIC_VAR: $PUBLIC_VAR"
+          if [ "$PUBLIC_VAR" != "visible_value" ]; then
+            echo "FAIL: expected PUBLIC_VAR='visible_value', got '$PUBLIC_VAR'"
+            exit 1
+          fi
+          echo "PASS: PUBLIC_VAR is correct"

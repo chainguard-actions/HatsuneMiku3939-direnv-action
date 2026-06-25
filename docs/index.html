@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>direnv-action documentation</title>
+  <meta name="description" content="Reference documentation for using direnv-action in GitHub Actions workflows.">
+  <link rel="canonical" href="https://hatsunemiku3939.github.io/direnv-action/">
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f5f1e7;
+      --paper-deep: #ebe3d3;
+      --ink: #171512;
+      --ink-soft: #514b43;
+      --ink-faint: #81786a;
+      --rule: #cfc4af;
+      --rule-dark: #8d806b;
+      --green: #006f55;
+      --green-soft: #d9eadf;
+      --amber: #9c6a00;
+      --red: #a13b2d;
+      --blue: #245f87;
+      --code: #171512;
+      --code-paper: #fffaf0;
+      --focus: #0f67a9;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(90deg, rgb(23 21 18 / 4%) 1px, transparent 1px) 0 0 / 72px 72px,
+        linear-gradient(0deg, rgb(23 21 18 / 3%) 1px, transparent 1px) 0 0 / 72px 72px,
+        var(--paper);
+      color: var(--ink);
+      font-family: "Azeret Mono", "IBM Plex Mono", "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+      line-height: 1.55;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .masthead {
+      padding: 28px 0 22px;
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .masthead-line {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .manual-id {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 26px;
+      color: var(--ink-soft);
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+
+    .manual-id span {
+      padding: 3px 7px;
+      border: 1px solid var(--rule-dark);
+      background: var(--paper-deep);
+    }
+
+    h1 {
+      max-width: 920px;
+      margin: 0;
+      font-size: clamp(42px, 9vw, 112px);
+      line-height: 0.88;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .tagline {
+      max-width: 760px;
+      margin: 18px 0 0;
+      color: var(--ink-soft);
+      font-size: 16px;
+    }
+
+    .repo-link {
+      display: inline-block;
+      min-width: 170px;
+      padding: 9px 10px;
+      border: 2px solid var(--ink);
+      color: var(--ink);
+      text-align: center;
+      text-decoration: none;
+      text-transform: uppercase;
+      box-shadow: 5px 5px 0 var(--ink);
+      transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+
+    .repo-link:hover {
+      transform: translate(2px, 2px);
+      box-shadow: 3px 3px 0 var(--ink);
+    }
+
+    .terminal-strip {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+      margin: 24px 0 0;
+    }
+
+    .trace {
+      border: 2px solid var(--ink);
+      background: var(--code);
+      color: #f7f1e6;
+    }
+
+    .trace-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-bottom: 1px solid #5f584d;
+      color: #d6ccb8;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .trace pre {
+      margin: 0;
+      padding: 16px;
+      overflow-x: auto;
+      color: inherit;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .trace .ok {
+      color: #8be0b4;
+    }
+
+    .trace .warn {
+      color: #f3cd79;
+    }
+
+    .quick-facts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      border: 2px solid var(--ink);
+      background: var(--code-paper);
+    }
+
+    .fact {
+      min-height: 112px;
+      padding: 14px;
+      border-right: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .fact:nth-child(2n) {
+      border-right: 0;
+    }
+
+    .fact:nth-last-child(-n + 2) {
+      border-bottom: 0;
+    }
+
+    .fact strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 230px minmax(0, 1fr);
+      gap: 34px;
+      padding: 34px 0 72px;
+    }
+
+    nav {
+      position: sticky;
+      top: 16px;
+      align-self: start;
+      padding: 16px 0 0;
+      border-top: 2px solid var(--ink);
+    }
+
+    nav a {
+      display: block;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--rule);
+      color: var(--ink-soft);
+      text-decoration: none;
+      text-transform: uppercase;
+      font-size: 13px;
+    }
+
+    nav a:hover {
+      color: var(--ink);
+    }
+
+    main {
+      display: grid;
+      gap: 28px;
+    }
+
+    section {
+      scroll-margin-top: 18px;
+      padding: 28px;
+      border: 2px solid var(--ink);
+      background: rgb(255 250 240 / 82%);
+    }
+
+    .section-kicker {
+      display: inline-block;
+      margin-bottom: 18px;
+      color: var(--green);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin: 0 0 18px;
+      font-size: clamp(26px, 5vw, 54px);
+      line-height: 0.95;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h3 {
+      margin: 24px 0 8px;
+      font-size: 17px;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    p {
+      max-width: 78ch;
+      margin: 0 0 14px;
+    }
+
+    code {
+      font-family: inherit;
+      font-size: 0.95em;
+    }
+
+    .code-block {
+      margin: 16px 0 0;
+      border: 1px solid var(--ink);
+      background: var(--code);
+      color: #f7f1e6;
+    }
+
+    .code-label {
+      padding: 8px 10px;
+      border-bottom: 1px solid #5f584d;
+      color: #d6ccb8;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    pre {
+      margin: 0;
+      padding: 16px;
+      overflow-x: auto;
+      line-height: 1.65;
+      font-size: 13px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 0;
+      background: var(--code-paper);
+    }
+
+    th,
+    td {
+      padding: 12px;
+      border: 1px solid var(--rule-dark);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--paper-deep);
+      color: var(--ink-soft);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .examples {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .example {
+      border: 1px solid var(--rule-dark);
+      background: var(--code-paper);
+    }
+
+    .example h3 {
+      margin: 0;
+      padding: 12px;
+      border-bottom: 1px solid var(--rule-dark);
+      background: var(--paper-deep);
+    }
+
+    .example p {
+      padding: 12px 12px 0;
+    }
+
+    .example .code-block {
+      margin: 12px;
+    }
+
+    .callout {
+      margin-top: 16px;
+      padding: 14px;
+      border-left: 8px solid var(--amber);
+      background: #fff1c7;
+    }
+
+    .danger {
+      border-left-color: var(--red);
+      background: #f6ddd7;
+    }
+
+    ul {
+      max-width: 78ch;
+      margin: 10px 0 0;
+      padding-left: 22px;
+    }
+
+    li + li {
+      margin-top: 8px;
+    }
+
+    footer {
+      padding: 24px 0 42px;
+      border-top: 2px solid var(--ink);
+      color: var(--ink-soft);
+      font-size: 13px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      .repo-link {
+        transition: none;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .masthead-line,
+      .terminal-strip,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .repo-link {
+        width: max-content;
+      }
+
+      nav {
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0 16px;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .page {
+        width: min(100% - 20px, 1180px);
+      }
+
+      .quick-facts,
+      .examples,
+      nav {
+        grid-template-columns: 1fr;
+      }
+
+      .fact,
+      .fact:nth-child(2n),
+      .fact:nth-last-child(-n + 2) {
+        border-right: 0;
+        border-bottom: 1px solid var(--rule);
+      }
+
+      .fact:last-child {
+        border-bottom: 0;
+      }
+
+      section {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="page">
+      <div class="manual-id" aria-label="Document metadata">
+        <span>direnv-action(1)</span>
+        <span>GitHub Actions</span>
+        <span>v1.4.0</span>
+      </div>
+      <div class="masthead-line">
+        <div>
+          <h1>Evaluate .envrc inside CI.</h1>
+          <p class="tagline">
+            A compact action for installing direnv, exporting a trusted environment, validating required names,
+            and carrying those variables into later workflow steps.
+          </p>
+        </div>
+        <a class="repo-link" href="https://github.com/HatsuneMiku3939/direnv-action">Repository</a>
+      </div>
+
+      <div class="terminal-strip">
+        <div class="trace" aria-label="Example action trace">
+          <div class="trace-head">
+            <span>workflow trace</span>
+            <span>no values printed</span>
+          </div>
+          <pre><code>$ direnv allow child
+<span class="ok">allowed .envrc</span>
+$ direnv export json
+<span class="ok">exported: CHILD_ENV, PATH, SECRET1</span>
+$ validate required
+<span class="ok">found: CHILD_ENV, SECRET1</span>
+$ mask secrets
+<span class="warn">redacted configured values</span></code></pre>
+        </div>
+
+        <div class="quick-facts" aria-label="Quick facts">
+          <div class="fact">
+            <strong>Runtime</strong>
+            Node 24 action, bundled in <code>dist/index.js</code>.
+          </div>
+          <div class="fact">
+            <strong>Source</strong>
+            Reads the selected directory's <code>.envrc</code>.
+          </div>
+          <div class="fact">
+            <strong>Output</strong>
+            Exports variables to later steps; custom outputs are not defined.
+          </div>
+          <div class="fact">
+            <strong>Safety</strong>
+            Use only with trusted repositories and trusted <code>.envrc</code> files.
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="page layout">
+    <nav aria-label="Page sections">
+      <a href="#quick-start">Quick start</a>
+      <a href="#inputs">Inputs</a>
+      <a href="#examples">Examples</a>
+      <a href="#troubleshooting">Troubleshooting</a>
+      <a href="#security">Security</a>
+      <a href="#maintainers">Maintainers</a>
+    </nav>
+
+    <main>
+      <section id="quick-start">
+        <span class="section-kicker">Start here</span>
+        <h2>Minimal workflow</h2>
+        <p>
+          Pin an exact release for repeatable builds. Use <code>@v1</code> only when the workflow should receive
+          compatible updates automatically.
+        </p>
+        <div class="code-block">
+          <div class="code-label">.github/workflows/example.yml</div>
+          <pre><code>steps:
+  - uses: actions/checkout@v7
+  - uses: HatsuneMiku3939/direnv-action@v1.4.0
+    with:
+      direnvVersion: 2.37.1
+      masks: SECRET1, SECRET2</code></pre>
+        </div>
+        <div class="callout">
+          This action logs exported variable names for debugging, but it does not print environment variable values.
+        </div>
+      </section>
+
+      <section id="inputs">
+        <span class="section-kicker">Contract</span>
+        <h2>Inputs</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Default</th>
+              <th>Use it for</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>direnvVersion</code></td>
+              <td><code>2.37.1</code></td>
+              <td>Selecting the direnv binary version installed from release assets or cache.</td>
+            </tr>
+            <tr>
+              <td><code>direnvChecksum</code></td>
+              <td><code>''</code></td>
+              <td>Optionally pinning the SHA-256 digest expected for the downloaded direnv binary.</td>
+            </tr>
+            <tr>
+              <td><code>masks</code></td>
+              <td><code>''</code></td>
+              <td>Comma-separated environment variable names whose exported values should be redacted from logs.</td>
+            </tr>
+            <tr>
+              <td><code>required</code></td>
+              <td><code>''</code></td>
+              <td>Newline-delimited environment variable names that must exist after <code>direnv export json</code>.</td>
+            </tr>
+            <tr>
+              <td><code>path</code></td>
+              <td><code>.</code></td>
+              <td>Directory where <code>direnv allow</code> and <code>direnv export json</code> run.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="examples">
+        <span class="section-kicker">Patterns</span>
+        <h2>Common configurations</h2>
+        <div class="examples">
+          <article class="example">
+            <h3>Pin direnv</h3>
+            <p>Use a known direnv version when workflow behavior must stay stable. Cold installs verify the binary digest before execution or caching.</p>
+            <div class="code-block">
+              <div class="code-label">direnvVersion</div>
+              <pre><code>- uses: HatsuneMiku3939/direnv-action@v1.4.0
+  with:
+    direnvVersion: 2.37.1</code></pre>
+            </div>
+          </article>
+
+          <article class="example">
+            <h3>Pin the binary digest</h3>
+            <p>By default the action uses the GitHub Release API asset digest. Provide <code>direnvChecksum</code> for an independent SHA-256 pin.</p>
+            <div class="code-block">
+              <div class="code-label">direnvChecksum</div>
+              <pre><code>- uses: HatsuneMiku3939/direnv-action@v1.4.0
+  with:
+    direnvVersion: 2.37.1
+    direnvChecksum: sha256:1f1b93dd6f38523fde26dfac96151ef9d31a374e3005cd3345fb93555ae0c9b5</code></pre>
+            </div>
+          </article>
+
+          <article class="example">
+            <h3>Mask secrets</h3>
+            <p>List exported variable names. Do not paste raw secret values into <code>masks</code>.</p>
+            <div class="code-block">
+              <div class="code-label">masks</div>
+              <pre><code>- uses: HatsuneMiku3939/direnv-action@v1.4.0
+  with:
+    masks: SECRET1, SECRET2</code></pre>
+            </div>
+          </article>
+
+          <article class="example">
+            <h3>Require names</h3>
+            <p>Fail the step before exporting anything when expected variables are missing.</p>
+            <div class="code-block">
+              <div class="code-label">required</div>
+              <pre><code>- uses: HatsuneMiku3939/direnv-action@v1.4.0
+  with:
+    required: |
+      AWS_REGION
+      DATABASE_URL
+      NODE_AUTH_TOKEN</code></pre>
+            </div>
+          </article>
+
+          <article class="example">
+            <h3>Use a subdirectory</h3>
+            <p>Point <code>path</code> at the directory containing the target <code>.envrc</code>.</p>
+            <div class="code-block">
+              <div class="code-label">path</div>
+              <pre><code>- uses: HatsuneMiku3939/direnv-action@v1.4.0
+  with:
+    path: child</code></pre>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="troubleshooting">
+        <span class="section-kicker">When it fails</span>
+        <h2>Troubleshooting</h2>
+        <h3>Required variables are missing</h3>
+        <p>
+          Check that <code>path</code> points at the intended <code>.envrc</code> and that
+          <code>direnv export json</code> exports every name listed in <code>required</code>.
+        </p>
+        <h3>Secret values still appear</h3>
+        <p>
+          Confirm <code>masks</code> contains variable names such as <code>SECRET1</code>, not the secret values.
+        </p>
+        <h3>PATH changes are not visible</h3>
+        <p>
+          When <code>.envrc</code> exports <code>PATH</code>, the action appends it through the GitHub Actions path API.
+          Later steps in the same job receive the updated path.
+        </p>
+        <h3>Downloaded direnv checksum mismatch</h3>
+        <p>
+          Confirm <code>direnvVersion</code> and <code>direnvChecksum</code> refer to the same upstream binary. If
+          <code>direnvChecksum</code> is not set, retry after checking that the upstream GitHub release asset metadata is
+          available.
+        </p>
+      </section>
+
+      <section id="security">
+        <span class="section-kicker">Trust boundary</span>
+        <h2>Security</h2>
+        <div class="callout danger">
+          <code>.envrc</code> is executable project configuration. Treat it as code, especially in workflows that can access
+          repository secrets, cloud credentials, deployment tokens, or production infrastructure.
+        </div>
+        <ul>
+          <li>Run this action only with trusted repositories and trusted <code>.envrc</code> contents.</li>
+          <li>
+            Cold installs verify the downloaded <code>direnv</code> binary before making it executable or saving it to
+            cache. By default this uses the GitHub Release API asset digest; set <code>direnvChecksum</code> for a
+            stronger independent pin.
+          </li>
+          <li>
+            Avoid evaluating untrusted fork contents from <code>pull_request_target</code> workflows. If you use
+            <code>pull_request_target</code>, do not check out and run a fork-provided <code>.envrc</code> in a job that
+            has access to secrets.
+          </li>
+          <li>
+            Prefer running secret-bearing jobs only on trusted refs, protected branches, or reviewed tags. For fork PR
+            validation, use <code>pull_request</code> with minimal permissions and without repository secrets unless the
+            <code>.envrc</code> contents are trusted.
+          </li>
+          <li>
+            Use the <code>required</code> input to fail early when expected exported variables are missing. This helps
+            prevent downstream steps from running with incomplete configuration, but it is not a sandbox or a
+            secret-protection boundary.
+          </li>
+          <li>
+            Keep workflow <code>permissions:</code> as narrow as possible and avoid passing long-lived credentials into
+            jobs that evaluate changing <code>.envrc</code> files.
+          </li>
+          <li>Use masking as log redaction, not as a complete secret protection boundary.</li>
+          <li>Keep sensitive logic inside trusted workflow contexts whenever possible.</li>
+        </ul>
+      </section>
+
+      <section id="maintainers">
+        <span class="section-kicker">Publishing</span>
+        <h2>Maintainers</h2>
+        <p>
+          This site is published from GitHub Pages using branch <code>master</code> and folder <code>/docs</code>.
+          Keep this page aligned with <code>README.md</code> and <code>action.yml</code>.
+        </p>
+        <p>
+          When preparing a release that changes the exact pinned tag, update both <code>README.md</code> and this page.
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="page">
+      direnv-action documentation. Source: <a href="https://github.com/HatsuneMiku3939/direnv-action">HatsuneMiku3939/direnv-action</a>.
+    </div>
+  </footer>
+</body>
+</html>
