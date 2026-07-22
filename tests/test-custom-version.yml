@@ -1,0 +1,35 @@
+name: Test custom direnv version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: direnv
+        uses: .
+        with:
+          masks: ''
+          direnvVersion: '2.32.3'
+          direnvChecksum: 'sha256:c0443e4600e4b93ec253e663fff18b5fb490cc555b1fc72f0ab22beaa2bb9810'
+          path: ${{ github.workspace }}/tests/fixtures/basic
+
+      - name: Assert direnv is installed and correct version
+        run: |
+          echo "direnv version: $(direnv version)"
+          VERSION="$(direnv version)"
+          if [ "$VERSION" != "2.32.3" ]; then
+            echo "FAIL: expected direnv version '2.32.3', got '$VERSION'"
+            exit 1
+          fi
+          echo "PASS: direnv version is correct"
+
+      - name: Assert MY_VAR is exported with custom version
+        run: |
+          echo "MY_VAR: $MY_VAR"
+          if [ "$MY_VAR" != "hello_world" ]; then
+            echo "FAIL: expected MY_VAR='hello_world', got '$MY_VAR'"
+            exit 1
+          fi
+          echo "PASS: MY_VAR is correct"

@@ -1,0 +1,34 @@
+name: Test masks input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: direnv
+        uses: .
+        with:
+          masks: 'MY_SECRET'
+          direnvVersion: '2.32.3'
+          direnvChecksum: 'sha256:c0443e4600e4b93ec253e663fff18b5fb490cc555b1fc72f0ab22beaa2bb9810'
+          path: ${{ github.workspace }}/tests/fixtures/masked
+
+      - name: Assert MY_SECRET is exported (value is masked in logs)
+        run: |
+          echo "MY_SECRET is set: $([ -n "$MY_SECRET" ] && echo yes || echo no)"
+          if [ -z "$MY_SECRET" ]; then
+            echo "FAIL: expected MY_SECRET to be set"
+            exit 1
+          fi
+          echo "PASS: MY_SECRET is set"
+
+      - name: Assert PUBLIC_VAR is exported and unmasked
+        run: |
+          echo "PUBLIC_VAR: $PUBLIC_VAR"
+          if [ "$PUBLIC_VAR" != "public_value" ]; then
+            echo "FAIL: expected PUBLIC_VAR='public_value', got '$PUBLIC_VAR'"
+            exit 1
+          fi
+          echo "PASS: PUBLIC_VAR is correct"
