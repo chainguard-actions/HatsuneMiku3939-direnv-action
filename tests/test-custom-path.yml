@@ -1,0 +1,41 @@
+name: Test direnv with custom path
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create .envrc in a subdirectory
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/myproject"
+          cat > "$GITHUB_WORKSPACE/myproject/.envrc" <<'EOF'
+          export PROJECT_NAME=my_project
+          export PROJECT_ENV=staging
+          EOF
+
+      - id: direnv
+        uses: .
+        with:
+          masks: ''
+          direnvVersion: '2.37.1'
+          path: myproject
+
+      - name: Assert PROJECT_NAME is set
+        run: |
+          echo "PROJECT_NAME: $PROJECT_NAME"
+          if [ "$PROJECT_NAME" != "my_project" ]; then
+            echo "FAIL: expected PROJECT_NAME='my_project', got '$PROJECT_NAME'"
+            exit 1
+          fi
+          echo "PASS: PROJECT_NAME is correct"
+
+      - name: Assert PROJECT_ENV is set
+        run: |
+          echo "PROJECT_ENV: $PROJECT_ENV"
+          if [ "$PROJECT_ENV" != "staging" ]; then
+            echo "FAIL: expected PROJECT_ENV='staging', got '$PROJECT_ENV'"
+            exit 1
+          fi
+          echo "PASS: PROJECT_ENV is correct"

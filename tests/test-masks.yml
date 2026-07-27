@@ -1,0 +1,48 @@
+name: Test direnv masks feature
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create .envrc with secret variables
+        run: |
+          cat > "$GITHUB_WORKSPACE/.envrc" <<'EOF'
+          export PUBLIC_VAR=public_value
+          export SECRET_TOKEN=super_secret_token_abc123
+          export ANOTHER_SECRET=another_secret_xyz789
+          EOF
+
+      - id: direnv
+        uses: .
+        with:
+          masks: 'SECRET_TOKEN,ANOTHER_SECRET'
+          direnvVersion: '2.37.1'
+          path: .
+
+      - name: Assert PUBLIC_VAR is accessible
+        run: |
+          echo "PUBLIC_VAR: $PUBLIC_VAR"
+          if [ "$PUBLIC_VAR" != "public_value" ]; then
+            echo "FAIL: expected PUBLIC_VAR='public_value', got '$PUBLIC_VAR'"
+            exit 1
+          fi
+          echo "PASS: PUBLIC_VAR is correct"
+
+      - name: Assert SECRET_TOKEN is set (masked in logs)
+        run: |
+          if [ -z "$SECRET_TOKEN" ]; then
+            echo "FAIL: SECRET_TOKEN should be set"
+            exit 1
+          fi
+          echo "PASS: SECRET_TOKEN is set (value masked)"
+
+      - name: Assert ANOTHER_SECRET is set (masked in logs)
+        run: |
+          if [ -z "$ANOTHER_SECRET" ]; then
+            echo "FAIL: ANOTHER_SECRET should be set"
+            exit 1
+          fi
+          echo "PASS: ANOTHER_SECRET is set (value masked)"

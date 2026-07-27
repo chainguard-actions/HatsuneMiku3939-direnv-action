@@ -1,0 +1,46 @@
+{
+  "name": "direnv-action",
+  "version": "1.4.3",
+  "description": "Provides environment variables via direnv",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint index.js index.test.js",
+    "prepare": "ncc build index.js -o dist --source-map",
+    "test": "vitest run",
+    "all": "npm run lint && npm run prepare && npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HatsuneMiku3939/direnv-action.git"
+  },
+  "keywords": [
+    "GitHub",
+    "Actions",
+    "JavaScript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/HatsuneMiku3939/direnv-action/issues"
+  },
+  "homepage": "https://github.com/HatsuneMiku3939/direnv-action#readme",
+  "dependencies": {
+    "@actions/cache": "^6.2.0",
+    "@actions/core": "^3.0.1",
+    "@actions/exec": "^3.0.0",
+    "@actions/tool-cache": "^4.0.0"
+  },
+  "overrides": {
+    "@actions/cache": {
+      "@actions/glob": "0.7.0"
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@vercel/ncc": "^0.44.1",
+    "eslint": "^10.7.0",
+    "globals": "^17.7.0",
+    "vitest": "^4.1.10"
+  }
+}
