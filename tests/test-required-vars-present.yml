@@ -1,0 +1,50 @@
+name: Test direnv required vars present
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Pre-install direnv into tool-cache
+        run: |
+          set -e
+          DIRENV_VERSION="2.37.1"
+          ARCH="amd64"
+          DIRENV_URL="https://github.com/direnv/direnv/releases/download/v${DIRENV_VERSION}/direnv.linux-${ARCH}"
+          curl -fsSL "$DIRENV_URL" -o /tmp/direnv
+          chmod +x /tmp/direnv
+          TOOL_CACHE="${RUNNER_TOOL_CACHE:-/opt/hostedtoolcache}"
+          TOOL_DIR="$TOOL_CACHE/direnv/$DIRENV_VERSION/x64"
+          mkdir -p "$TOOL_DIR"
+          cp /tmp/direnv "$TOOL_DIR/direnv"
+          touch "$TOOL_CACHE/direnv/$DIRENV_VERSION/x64.complete"
+          echo "direnv installed to $TOOL_DIR"
+          "$TOOL_DIR/direnv" version
+
+      - id: action
+        uses: .
+        with:
+          masks: ''
+          required: |
+            REQUIRED_VAR_A
+            REQUIRED_VAR_B
+          path: tests/fixtures/required-present
+
+      - name: Assert action exported all required variables
+        env:
+          REQUIRED_VAR_A: ${{ env.REQUIRED_VAR_A }}
+          REQUIRED_VAR_B: ${{ env.REQUIRED_VAR_B }}
+        run: |
+          echo "REQUIRED_VAR_A: $REQUIRED_VAR_A"
+          echo "REQUIRED_VAR_B: $REQUIRED_VAR_B"
+          if [ "$REQUIRED_VAR_A" != "value_a" ]; then
+            echo "FAIL: expected REQUIRED_VAR_A='value_a', got '$REQUIRED_VAR_A'"
+            exit 1
+          fi
+          if [ "$REQUIRED_VAR_B" != "value_b" ]; then
+            echo "FAIL: expected REQUIRED_VAR_B='value_b', got '$REQUIRED_VAR_B'"
+            exit 1
+          fi
+          echo "PASS: all required variables exported correctly"

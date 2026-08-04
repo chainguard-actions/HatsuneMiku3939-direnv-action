@@ -1,0 +1,47 @@
+name: Test direnv custom path
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Pre-install direnv into tool-cache
+        run: |
+          set -e
+          DIRENV_VERSION="2.37.1"
+          ARCH="amd64"
+          DIRENV_URL="https://github.com/direnv/direnv/releases/download/v${DIRENV_VERSION}/direnv.linux-${ARCH}"
+          curl -fsSL "$DIRENV_URL" -o /tmp/direnv
+          chmod +x /tmp/direnv
+          TOOL_CACHE="${RUNNER_TOOL_CACHE:-/opt/hostedtoolcache}"
+          TOOL_DIR="$TOOL_CACHE/direnv/$DIRENV_VERSION/x64"
+          mkdir -p "$TOOL_DIR"
+          cp /tmp/direnv "$TOOL_DIR/direnv"
+          touch "$TOOL_CACHE/direnv/$DIRENV_VERSION/x64.complete"
+          echo "direnv installed to $TOOL_DIR"
+          "$TOOL_DIR/direnv" version
+
+      - id: action
+        uses: .
+        with:
+          masks: ''
+          path: tests/fixtures/subdir
+
+      - name: Assert action exported subdirectory variables
+        env:
+          SUBDIR_VAR: ${{ env.SUBDIR_VAR }}
+          SUBDIR_GREETING: ${{ env.SUBDIR_GREETING }}
+        run: |
+          echo "SUBDIR_VAR: $SUBDIR_VAR"
+          echo "SUBDIR_GREETING: $SUBDIR_GREETING"
+          if [ "$SUBDIR_VAR" != "from_subdir" ]; then
+            echo "FAIL: expected SUBDIR_VAR='from_subdir', got '$SUBDIR_VAR'"
+            exit 1
+          fi
+          if [ "$SUBDIR_GREETING" != "hello_subdir" ]; then
+            echo "FAIL: expected SUBDIR_GREETING='hello_subdir', got '$SUBDIR_GREETING'"
+            exit 1
+          fi
+          echo "PASS: subdirectory variables exported correctly"

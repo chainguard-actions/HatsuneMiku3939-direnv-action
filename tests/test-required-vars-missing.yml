@@ -1,0 +1,49 @@
+name: Test direnv required vars missing causes failure
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Pre-install direnv into tool-cache
+        run: |
+          set -e
+          DIRENV_VERSION="2.37.1"
+          ARCH="amd64"
+          DIRENV_URL="https://github.com/direnv/direnv/releases/download/v${DIRENV_VERSION}/direnv.linux-${ARCH}"
+          curl -fsSL "$DIRENV_URL" -o /tmp/direnv
+          chmod +x /tmp/direnv
+          TOOL_CACHE="${RUNNER_TOOL_CACHE:-/opt/hostedtoolcache}"
+          TOOL_DIR="$TOOL_CACHE/direnv/$DIRENV_VERSION/x64"
+          mkdir -p "$TOOL_DIR"
+          cp /tmp/direnv "$TOOL_DIR/direnv"
+          touch "$TOOL_CACHE/direnv/$DIRENV_VERSION/x64.complete"
+          echo "direnv installed to $TOOL_DIR"
+          "$TOOL_DIR/direnv" version
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          masks: ''
+          required: |
+            PRESENT_VAR
+            MISSING_REQUIRED_VAR
+          path: tests/fixtures/required-missing
+
+      - name: Assert action failed due to missing required variable
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action correctly failed when required variable was missing"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "FAIL: expected action to fail when required variable is missing, but it succeeded"
+            exit 1
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

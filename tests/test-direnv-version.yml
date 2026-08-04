@@ -1,0 +1,42 @@
+name: Test direnv custom version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Pre-install direnv 2.35.0 into tool-cache
+        run: |
+          set -e
+          DIRENV_VERSION="2.35.0"
+          ARCH="amd64"
+          DIRENV_URL="https://github.com/direnv/direnv/releases/download/v${DIRENV_VERSION}/direnv.linux-${ARCH}"
+          curl -fsSL "$DIRENV_URL" -o /tmp/direnv
+          chmod +x /tmp/direnv
+          TOOL_CACHE="${RUNNER_TOOL_CACHE:-/opt/hostedtoolcache}"
+          TOOL_DIR="$TOOL_CACHE/direnv/$DIRENV_VERSION/x64"
+          mkdir -p "$TOOL_DIR"
+          cp /tmp/direnv "$TOOL_DIR/direnv"
+          touch "$TOOL_CACHE/direnv/$DIRENV_VERSION/x64.complete"
+          echo "direnv installed to $TOOL_DIR"
+          "$TOOL_DIR/direnv" version
+
+      - id: action
+        uses: .
+        with:
+          masks: ''
+          direnvVersion: '2.35.0'
+          path: tests/fixtures/version
+
+      - name: Assert action exported variables with custom version
+        env:
+          VERSION_TEST_VAR: ${{ env.VERSION_TEST_VAR }}
+        run: |
+          echo "VERSION_TEST_VAR: $VERSION_TEST_VAR"
+          if [ "$VERSION_TEST_VAR" != "version_test_passed" ]; then
+            echo "FAIL: expected VERSION_TEST_VAR='version_test_passed', got '$VERSION_TEST_VAR'"
+            exit 1
+          fi
+          echo "PASS: VERSION_TEST_VAR is set correctly with custom direnv version"

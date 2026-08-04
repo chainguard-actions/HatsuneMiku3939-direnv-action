@@ -1,0 +1,50 @@
+name: Test basic direnv usage
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Pre-install direnv into tool-cache
+        run: |
+          set -e
+          DIRENV_VERSION="2.37.1"
+          ARCH="amd64"
+          DIRENV_URL="https://github.com/direnv/direnv/releases/download/v${DIRENV_VERSION}/direnv.linux-${ARCH}"
+          # Download direnv binary
+          curl -fsSL "$DIRENV_URL" -o /tmp/direnv
+          chmod +x /tmp/direnv
+          # Set up tool-cache directory structure expected by @actions/tool-cache
+          TOOL_CACHE="${RUNNER_TOOL_CACHE:-/opt/hostedtoolcache}"
+          TOOL_DIR="$TOOL_CACHE/direnv/$DIRENV_VERSION/x64"
+          mkdir -p "$TOOL_DIR"
+          cp /tmp/direnv "$TOOL_DIR/direnv"
+          # Create the .complete marker file
+          touch "$TOOL_CACHE/direnv/$DIRENV_VERSION/x64.complete"
+          echo "direnv installed to $TOOL_DIR"
+          "$TOOL_DIR/direnv" version
+
+      - id: action
+        uses: .
+        with:
+          masks: ''
+          path: tests/fixtures/basic
+
+      - name: Assert action exported variables
+        env:
+          MY_TEST_VAR: ${{ env.MY_TEST_VAR }}
+          ANOTHER_VAR: ${{ env.ANOTHER_VAR }}
+        run: |
+          echo "MY_TEST_VAR: $MY_TEST_VAR"
+          echo "ANOTHER_VAR: $ANOTHER_VAR"
+          if [ "$MY_TEST_VAR" != "hello_from_direnv" ]; then
+            echo "FAIL: expected MY_TEST_VAR='hello_from_direnv', got '$MY_TEST_VAR'"
+            exit 1
+          fi
+          if [ "$ANOTHER_VAR" != "world" ]; then
+            echo "FAIL: expected ANOTHER_VAR='world', got '$ANOTHER_VAR'"
+            exit 1
+          fi
+          echo "PASS: variables exported correctly"

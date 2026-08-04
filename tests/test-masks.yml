@@ -1,0 +1,51 @@
+name: Test direnv masks
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Pre-install direnv into tool-cache
+        run: |
+          set -e
+          DIRENV_VERSION="2.37.1"
+          ARCH="amd64"
+          DIRENV_URL="https://github.com/direnv/direnv/releases/download/v${DIRENV_VERSION}/direnv.linux-${ARCH}"
+          curl -fsSL "$DIRENV_URL" -o /tmp/direnv
+          chmod +x /tmp/direnv
+          TOOL_CACHE="${RUNNER_TOOL_CACHE:-/opt/hostedtoolcache}"
+          TOOL_DIR="$TOOL_CACHE/direnv/$DIRENV_VERSION/x64"
+          mkdir -p "$TOOL_DIR"
+          cp /tmp/direnv "$TOOL_DIR/direnv"
+          touch "$TOOL_CACHE/direnv/$DIRENV_VERSION/x64.complete"
+          echo "direnv installed to $TOOL_DIR"
+          "$TOOL_DIR/direnv" version
+
+      - id: action
+        uses: .
+        with:
+          masks: 'SECRET_TOKEN,ANOTHER_SECRET'
+          path: tests/fixtures/masks
+
+      - name: Assert action exported variables with masks
+        env:
+          PUBLIC_VAR: ${{ env.PUBLIC_VAR }}
+          SECRET_TOKEN: ${{ env.SECRET_TOKEN }}
+          ANOTHER_SECRET: ${{ env.ANOTHER_SECRET }}
+        run: |
+          echo "PUBLIC_VAR: $PUBLIC_VAR"
+          if [ "$PUBLIC_VAR" != "public_value" ]; then
+            echo "FAIL: expected PUBLIC_VAR='public_value', got '$PUBLIC_VAR'"
+            exit 1
+          fi
+          if [ "$SECRET_TOKEN" != "super_secret_value" ]; then
+            echo "FAIL: expected SECRET_TOKEN='super_secret_value'"
+            exit 1
+          fi
+          if [ "$ANOTHER_SECRET" != "another_secret_value" ]; then
+            echo "FAIL: expected ANOTHER_SECRET='another_secret_value'"
+            exit 1
+          fi
+          echo "PASS: all variables exported correctly, secrets are masked in logs"
