@@ -1,0 +1,56 @@
+name: Test required - succeed when all required env vars are present
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Pre-install direnv into tool cache
+        run: |
+          DIRENV_VERSION="2.37.1"
+          TOOL_CACHE_DIR="${RUNNER_TOOL_CACHE:-/opt/hostedtoolcache}"
+          INSTALL_DIR="$TOOL_CACHE_DIR/direnv/$DIRENV_VERSION/x64"
+          mkdir -p "$INSTALL_DIR"
+          curl -sfL "https://github.com/direnv/direnv/releases/download/v${DIRENV_VERSION}/direnv.linux-amd64" \
+            -o "$INSTALL_DIR/direnv"
+          chmod +x "$INSTALL_DIR/direnv"
+          touch "${INSTALL_DIR}.complete"
+          echo "direnv pre-installed at $INSTALL_DIR"
+          "$INSTALL_DIR/direnv" version
+
+      - name: Create .envrc with all required variables
+        run: |
+          printf 'export REQUIRED_VAR_A=value_a\nexport REQUIRED_VAR_B=value_b\n' > "$GITHUB_WORKSPACE/.envrc"
+
+      - id: action
+        uses: .
+        with:
+          masks: ''
+          required: |
+            REQUIRED_VAR_A
+            REQUIRED_VAR_B
+          path: .
+
+      - name: Assert REQUIRED_VAR_A is exported
+        env:
+          REQUIRED_VAR_A: ${{ env.REQUIRED_VAR_A }}
+        run: |
+          echo "REQUIRED_VAR_A: $REQUIRED_VAR_A"
+          if [ "$REQUIRED_VAR_A" != "value_a" ]; then
+            echo "FAIL: expected REQUIRED_VAR_A='value_a', got '$REQUIRED_VAR_A'"
+            exit 1
+          fi
+          echo "PASS: REQUIRED_VAR_A is correct"
+
+      - name: Assert REQUIRED_VAR_B is exported
+        env:
+          REQUIRED_VAR_B: ${{ env.REQUIRED_VAR_B }}
+        run: |
+          echo "REQUIRED_VAR_B: $REQUIRED_VAR_B"
+          if [ "$REQUIRED_VAR_B" != "value_b" ]; then
+            echo "FAIL: expected REQUIRED_VAR_B='value_b', got '$REQUIRED_VAR_B'"
+            exit 1
+          fi
+          echo "PASS: REQUIRED_VAR_B is correct"

@@ -1,0 +1,53 @@
+name: Test basic usage - export env vars from .envrc
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Pre-install direnv into tool cache
+        run: |
+          DIRENV_VERSION="2.37.1"
+          TOOL_CACHE_DIR="${RUNNER_TOOL_CACHE:-/opt/hostedtoolcache}"
+          INSTALL_DIR="$TOOL_CACHE_DIR/direnv/$DIRENV_VERSION/x64"
+          mkdir -p "$INSTALL_DIR"
+          curl -sfL "https://github.com/direnv/direnv/releases/download/v${DIRENV_VERSION}/direnv.linux-amd64" \
+            -o "$INSTALL_DIR/direnv"
+          chmod +x "$INSTALL_DIR/direnv"
+          touch "${INSTALL_DIR}.complete"
+          echo "direnv pre-installed at $INSTALL_DIR"
+          "$INSTALL_DIR/direnv" version
+
+      - name: Create .envrc in workspace
+        run: |
+          printf 'export MY_VAR=hello_world\nexport ANOTHER_VAR=test_value_123\n' > "$GITHUB_WORKSPACE/.envrc"
+
+      - id: action
+        uses: .
+        with:
+          masks: ''
+          path: .
+
+      - name: Assert MY_VAR is exported
+        env:
+          MY_VAR: ${{ env.MY_VAR }}
+        run: |
+          echo "MY_VAR: $MY_VAR"
+          if [ "$MY_VAR" != "hello_world" ]; then
+            echo "FAIL: expected MY_VAR='hello_world', got '$MY_VAR'"
+            exit 1
+          fi
+          echo "PASS: MY_VAR is correct"
+
+      - name: Assert ANOTHER_VAR is exported
+        env:
+          ANOTHER_VAR: ${{ env.ANOTHER_VAR }}
+        run: |
+          echo "ANOTHER_VAR: $ANOTHER_VAR"
+          if [ "$ANOTHER_VAR" != "test_value_123" ]; then
+            echo "FAIL: expected ANOTHER_VAR='test_value_123', got '$ANOTHER_VAR'"
+            exit 1
+          fi
+          echo "PASS: ANOTHER_VAR is correct"

@@ -1,0 +1,43 @@
+name: Test direnvVersion - install a specific version of direnv
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Pre-install direnv 2.36.0 into tool cache
+        run: |
+          DIRENV_VERSION="2.36.0"
+          TOOL_CACHE_DIR="${RUNNER_TOOL_CACHE:-/opt/hostedtoolcache}"
+          INSTALL_DIR="$TOOL_CACHE_DIR/direnv/$DIRENV_VERSION/x64"
+          mkdir -p "$INSTALL_DIR"
+          curl -sfL "https://github.com/direnv/direnv/releases/download/v${DIRENV_VERSION}/direnv.linux-amd64" \
+            -o "$INSTALL_DIR/direnv"
+          chmod +x "$INSTALL_DIR/direnv"
+          touch "${INSTALL_DIR}.complete"
+          echo "direnv pre-installed at $INSTALL_DIR"
+          "$INSTALL_DIR/direnv" version
+
+      - name: Create simple .envrc
+        run: |
+          printf 'export VERSION_TEST_VAR=direnv_version_test\n' > "$GITHUB_WORKSPACE/.envrc"
+
+      - id: action
+        uses: .
+        with:
+          masks: ''
+          direnvVersion: '2.36.0'
+          path: .
+
+      - name: Assert VERSION_TEST_VAR is exported (action ran with specified direnv version)
+        env:
+          VERSION_TEST_VAR: ${{ env.VERSION_TEST_VAR }}
+        run: |
+          echo "VERSION_TEST_VAR: $VERSION_TEST_VAR"
+          if [ "$VERSION_TEST_VAR" != "direnv_version_test" ]; then
+            echo "FAIL: expected VERSION_TEST_VAR='direnv_version_test', got '$VERSION_TEST_VAR'"
+            exit 1
+          fi
+          echo "PASS: action ran successfully with specified direnv version"

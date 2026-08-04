@@ -1,0 +1,53 @@
+name: Test masks - mask specified environment variables
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Pre-install direnv into tool cache
+        run: |
+          DIRENV_VERSION="2.37.1"
+          TOOL_CACHE_DIR="${RUNNER_TOOL_CACHE:-/opt/hostedtoolcache}"
+          INSTALL_DIR="$TOOL_CACHE_DIR/direnv/$DIRENV_VERSION/x64"
+          mkdir -p "$INSTALL_DIR"
+          curl -sfL "https://github.com/direnv/direnv/releases/download/v${DIRENV_VERSION}/direnv.linux-amd64" \
+            -o "$INSTALL_DIR/direnv"
+          chmod +x "$INSTALL_DIR/direnv"
+          touch "${INSTALL_DIR}.complete"
+          echo "direnv pre-installed at $INSTALL_DIR"
+          "$INSTALL_DIR/direnv" version
+
+      - name: Create .envrc with secret variable
+        run: |
+          printf 'export PUBLIC_VAR=public_value\nexport SECRET_VAR=super_secret_value\n' > "$GITHUB_WORKSPACE/.envrc"
+
+      - id: action
+        uses: .
+        with:
+          masks: 'SECRET_VAR'
+          path: .
+
+      - name: Assert action succeeded and PUBLIC_VAR is exported
+        env:
+          PUBLIC_VAR: ${{ env.PUBLIC_VAR }}
+        run: |
+          echo "PUBLIC_VAR: $PUBLIC_VAR"
+          if [ "$PUBLIC_VAR" != "public_value" ]; then
+            echo "FAIL: expected PUBLIC_VAR='public_value', got '$PUBLIC_VAR'"
+            exit 1
+          fi
+          echo "PASS: PUBLIC_VAR is correct"
+
+      - name: Assert SECRET_VAR is still exported (just masked in logs)
+        env:
+          SECRET_VAR: ${{ env.SECRET_VAR }}
+        run: |
+          # The variable should still be set even though it's masked in logs
+          if [ -z "$SECRET_VAR" ]; then
+            echo "FAIL: SECRET_VAR should be set (even if masked in logs)"
+            exit 1
+          fi
+          echo "PASS: SECRET_VAR is set (value is masked in logs)"
