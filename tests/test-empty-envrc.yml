@@ -1,0 +1,40 @@
+name: Test empty .envrc exports no variables
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create empty .envrc
+        run: |
+          # Create an empty .envrc (no exports)
+          echo "" > "$GITHUB_WORKSPACE/.envrc"
+
+      - id: direnv
+        uses: .
+        with:
+          masks: ''
+          direnvVersion: '2.37.1'
+          path: .
+
+      - name: Assert action succeeded with empty .envrc
+        env:
+          OUTCOME: ${{ steps.direnv.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected action to succeed with empty .envrc, got outcome=$OUTCOME"
+            exit 1
+          fi
+          echo "PASS: action succeeded with empty .envrc"
+
+      - name: Assert no unexpected variable was set
+        run: |
+          # EMPTY_ENVRC_VAR should not be set since .envrc is empty
+          if [ -n "$EMPTY_ENVRC_VAR" ]; then
+            echo "FAIL: EMPTY_ENVRC_VAR should not be set, got: $EMPTY_ENVRC_VAR"
+            exit 1
+          fi
+          echo "PASS: no unexpected variables were exported"

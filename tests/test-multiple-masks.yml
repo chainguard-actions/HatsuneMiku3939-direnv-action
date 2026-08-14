@@ -1,0 +1,48 @@
+name: Test multiple masks
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create .envrc with multiple secret variables
+        run: |
+          cat > "$GITHUB_WORKSPACE/.envrc" <<'EOF'
+          export SECRET_ONE=first_secret
+          export SECRET_TWO=second_secret
+          export PUBLIC_ONE=public_value
+          EOF
+
+      - id: direnv
+        uses: .
+        with:
+          masks: 'SECRET_ONE, SECRET_TWO'
+          direnvVersion: '2.37.1'
+          path: .
+
+      - name: Assert PUBLIC_ONE is exported and accessible
+        run: |
+          echo "PUBLIC_ONE=$PUBLIC_ONE"
+          if [ "$PUBLIC_ONE" != "public_value" ]; then
+            echo "FAIL: expected PUBLIC_ONE=public_value, got: $PUBLIC_ONE"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert SECRET_ONE is exported (masked but accessible)
+        run: |
+          if [ "$SECRET_ONE" != "first_secret" ]; then
+            echo "FAIL: expected SECRET_ONE=first_secret, got: $SECRET_ONE"
+            exit 1
+          fi
+          echo "PASS: SECRET_ONE is set correctly (masked in logs)"
+
+      - name: Assert SECRET_TWO is exported (masked but accessible)
+        run: |
+          if [ "$SECRET_TWO" != "second_secret" ]; then
+            echo "FAIL: expected SECRET_TWO=second_secret, got: $SECRET_TWO"
+            exit 1
+          fi
+          echo "PASS: SECRET_TWO is set correctly (masked in logs)"
