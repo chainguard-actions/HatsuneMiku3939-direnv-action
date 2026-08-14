@@ -1,0 +1,53 @@
+name: Test required - action succeeds when all required variables are present
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create .envrc with all required variables
+        run: |
+          cat > "$GITHUB_WORKSPACE/.envrc" <<'EOF'
+          export REQUIRED_VAR_A=value_a
+          export REQUIRED_VAR_B=value_b
+          export OPTIONAL_VAR=optional_value
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          masks: ''
+          required: |
+            REQUIRED_VAR_A
+            REQUIRED_VAR_B
+          direnvVersion: '2.37.1'
+          path: .
+
+      - name: Assert REQUIRED_VAR_A is exported
+        run: |
+          echo "actual REQUIRED_VAR_A: $REQUIRED_VAR_A"
+          if [ "$REQUIRED_VAR_A" != "value_a" ]; then
+            echo "FAIL: expected REQUIRED_VAR_A='value_a', got '$REQUIRED_VAR_A'"
+            exit 1
+          fi
+          echo "PASS: REQUIRED_VAR_A is set correctly"
+
+      - name: Assert REQUIRED_VAR_B is exported
+        run: |
+          echo "actual REQUIRED_VAR_B: $REQUIRED_VAR_B"
+          if [ "$REQUIRED_VAR_B" != "value_b" ]; then
+            echo "FAIL: expected REQUIRED_VAR_B='value_b', got '$REQUIRED_VAR_B'"
+            exit 1
+          fi
+          echo "PASS: REQUIRED_VAR_B is set correctly"
+
+      - name: Assert OPTIONAL_VAR is also exported
+        run: |
+          echo "actual OPTIONAL_VAR: $OPTIONAL_VAR"
+          if [ "$OPTIONAL_VAR" != "optional_value" ]; then
+            echo "FAIL: expected OPTIONAL_VAR='optional_value', got '$OPTIONAL_VAR'"
+            exit 1
+          fi
+          echo "PASS: OPTIONAL_VAR is set correctly"

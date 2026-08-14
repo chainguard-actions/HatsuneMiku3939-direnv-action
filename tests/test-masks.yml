@@ -1,0 +1,50 @@
+name: Test masks - mask sensitive environment variables
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create .envrc with secret variables
+        run: |
+          cat > "$GITHUB_WORKSPACE/.envrc" <<'EOF'
+          export PUBLIC_VAR=public_value
+          export SECRET_TOKEN=super_secret_token_abc123
+          export ANOTHER_SECRET=another_secret_value_xyz
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          masks: 'SECRET_TOKEN,ANOTHER_SECRET'
+          direnvVersion: '2.37.1'
+          path: .
+
+      - name: Assert PUBLIC_VAR is exported and accessible
+        run: |
+          echo "actual PUBLIC_VAR: $PUBLIC_VAR"
+          if [ "$PUBLIC_VAR" != "public_value" ]; then
+            echo "FAIL: expected PUBLIC_VAR='public_value', got '$PUBLIC_VAR'"
+            exit 1
+          fi
+          echo "PASS: PUBLIC_VAR is set correctly"
+
+      - name: Assert SECRET_TOKEN is exported (value is masked in logs)
+        run: |
+          # The value should still be accessible even though it's masked
+          if [ -z "$SECRET_TOKEN" ]; then
+            echo "FAIL: SECRET_TOKEN should be set"
+            exit 1
+          fi
+          echo "PASS: SECRET_TOKEN is set (value masked)"
+
+      - name: Assert ANOTHER_SECRET is exported (value is masked in logs)
+        run: |
+          # The value should still be accessible even though it's masked
+          if [ -z "$ANOTHER_SECRET" ]; then
+            echo "FAIL: ANOTHER_SECRET should be set"
+            exit 1
+          fi
+          echo "PASS: ANOTHER_SECRET is set (value masked)"

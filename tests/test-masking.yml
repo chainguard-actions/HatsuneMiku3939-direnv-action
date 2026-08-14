@@ -1,0 +1,40 @@
+name: Test direnv with masked variables
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          masks: 'SECRET1, SECRET2'
+          direnvVersion: '2.37.1'
+          path: .
+
+      - name: Assert masked vars are still exported (values available in env)
+        run: |
+          echo "SECRET1 is set: $([ -n "$SECRET1" ] && echo yes || echo no)"
+          if [ "$SECRET1" != "ULTRA_SECRET1" ]; then
+            echo "FAIL: expected SECRET1=ULTRA_SECRET1, got '$SECRET1'"
+            exit 1
+          fi
+          echo "PASS SECRET1"
+
+          echo "SECRET2 is set: $([ -n "$SECRET2" ] && echo yes || echo no)"
+          if [ "$SECRET2" != "VERY_SECRET2" ]; then
+            echo "FAIL: expected SECRET2=VERY_SECRET2, got '$SECRET2'"
+            exit 1
+          fi
+          echo "PASS SECRET2"
+
+      - name: Assert unmasked var SECRET3 is still exported
+        run: |
+          echo "SECRET3=$SECRET3"
+          if [ "$SECRET3" != "THIS_IS_UNMASKED" ]; then
+            echo "FAIL: expected SECRET3=THIS_IS_UNMASKED, got '$SECRET3'"
+            exit 1
+          fi
+          echo "PASS"

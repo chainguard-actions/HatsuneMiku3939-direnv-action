@@ -1,0 +1,41 @@
+name: Test custom path - evaluate .envrc in a subdirectory
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create .envrc in a subdirectory
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/mysubdir"
+          cat > "$GITHUB_WORKSPACE/mysubdir/.envrc" <<'EOF'
+          export SUBDIR_VAR=from_subdir
+          export SUBDIR_SECRET=secret_in_subdir
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          masks: ''
+          direnvVersion: '2.37.1'
+          path: mysubdir
+
+      - name: Assert SUBDIR_VAR is exported from subdirectory .envrc
+        run: |
+          echo "actual SUBDIR_VAR: $SUBDIR_VAR"
+          if [ "$SUBDIR_VAR" != "from_subdir" ]; then
+            echo "FAIL: expected SUBDIR_VAR='from_subdir', got '$SUBDIR_VAR'"
+            exit 1
+          fi
+          echo "PASS: SUBDIR_VAR is set correctly from subdirectory"
+
+      - name: Assert SUBDIR_SECRET is exported from subdirectory .envrc
+        run: |
+          echo "actual SUBDIR_SECRET: $SUBDIR_SECRET"
+          if [ "$SUBDIR_SECRET" != "secret_in_subdir" ]; then
+            echo "FAIL: expected SUBDIR_SECRET='secret_in_subdir', got '$SUBDIR_SECRET'"
+            exit 1
+          fi
+          echo "PASS: SUBDIR_SECRET is set correctly from subdirectory"
