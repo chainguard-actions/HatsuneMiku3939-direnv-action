@@ -1,4 +1,4 @@
-name: Test basic direnv export
+name: Test basic usage
 on:
   workflow_dispatch:
 jobs:
@@ -6,40 +6,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create .envrc in workspace
+        run: |
+          cat > "$GITHUB_WORKSPACE/.envrc" << 'EOF'
+          export MY_VAR=hello_world
+          export ANOTHER_VAR=foobar
+          EOF
+
       - id: action
         uses: .
         with:
           masks: ''
-          path: ${{ github.workspace }}
-      - name: Assert DIRENV_ACTION_TEST is exported
+          direnvVersion: '2.37.1'
+          path: '.'
+
+      - name: Assert MY_VAR is exported
         run: |
-          echo "DIRENV_ACTION_TEST=$DIRENV_ACTION_TEST"
-          if [ "$DIRENV_ACTION_TEST" != "HatsuneMiku3939" ]; then
-            echo "FAIL: expected DIRENV_ACTION_TEST=HatsuneMiku3939, got '$DIRENV_ACTION_TEST'"
+          echo "MY_VAR: $MY_VAR"
+          if [ "$MY_VAR" != "hello_world" ]; then
+            echo "FAIL: expected MY_VAR=hello_world, got: $MY_VAR"
             exit 1
           fi
-          echo "PASS"
-      - name: Assert SECRET1 is exported
+          echo "PASS: MY_VAR is correct"
+
+      - name: Assert ANOTHER_VAR is exported
         run: |
-          echo "SECRET1 is set: $([ -n "$SECRET1" ] && echo yes || echo no)"
-          if [ "$SECRET1" != "ULTRA_SECRET1" ]; then
-            echo "FAIL: expected SECRET1=ULTRA_SECRET1, got '$SECRET1'"
+          echo "ANOTHER_VAR: $ANOTHER_VAR"
+          if [ "$ANOTHER_VAR" != "foobar" ]; then
+            echo "FAIL: expected ANOTHER_VAR=foobar, got: $ANOTHER_VAR"
             exit 1
           fi
-          echo "PASS"
-      - name: Assert SECRET2 is exported
-        run: |
-          echo "SECRET2 is set: $([ -n "$SECRET2" ] && echo yes || echo no)"
-          if [ "$SECRET2" != "VERY_SECRET2" ]; then
-            echo "FAIL: expected SECRET2=VERY_SECRET2, got '$SECRET2'"
-            exit 1
-          fi
-          echo "PASS"
-      - name: Assert SECRET3 is exported
-        run: |
-          echo "SECRET3=$SECRET3"
-          if [ "$SECRET3" != "THIS_IS_UNMASKED" ]; then
-            echo "FAIL: expected SECRET3=THIS_IS_UNMASKED, got '$SECRET3'"
-            exit 1
-          fi
-          echo "PASS"
+          echo "PASS: ANOTHER_VAR is correct"

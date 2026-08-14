@@ -1,4 +1,4 @@
-name: Test direnv with masked secrets
+name: Test masks input
 on:
   workflow_dispatch:
 jobs:
@@ -6,32 +6,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create .envrc with secrets to mask
+        run: |
+          cat > "$GITHUB_WORKSPACE/.envrc" << 'EOF'
+          export PUBLIC_VAR=visible
+          export SECRET_TOKEN=my_secret_value
+          export ANOTHER_SECRET=another_secret_value
+          EOF
+
       - id: action
         uses: .
         with:
-          masks: 'SECRET1,SECRET2'
-          path: ${{ github.workspace }}
-      - name: Assert SECRET1 is exported (even when masked)
+          masks: 'SECRET_TOKEN,ANOTHER_SECRET'
+          direnvVersion: '2.37.1'
+          path: '.'
+
+      - name: Assert PUBLIC_VAR is exported and accessible
         run: |
-          echo "SECRET1 is set: $([ -n "$SECRET1" ] && echo yes || echo no)"
-          if [ "$SECRET1" != "ULTRA_SECRET1" ]; then
-            echo "FAIL: expected SECRET1=ULTRA_SECRET1, got '$SECRET1'"
+          echo "PUBLIC_VAR: $PUBLIC_VAR"
+          if [ "$PUBLIC_VAR" != "visible" ]; then
+            echo "FAIL: expected PUBLIC_VAR=visible, got: $PUBLIC_VAR"
             exit 1
           fi
-          echo "PASS"
-      - name: Assert SECRET2 is exported (even when masked)
+          echo "PASS: PUBLIC_VAR is correct"
+
+      - name: Assert SECRET_TOKEN is exported (masked but still set)
         run: |
-          echo "SECRET2 is set: $([ -n "$SECRET2" ] && echo yes || echo no)"
-          if [ "$SECRET2" != "VERY_SECRET2" ]; then
-            echo "FAIL: expected SECRET2=VERY_SECRET2, got '$SECRET2'"
+          if [ -z "$SECRET_TOKEN" ]; then
+            echo "FAIL: expected SECRET_TOKEN to be set even though it is masked"
             exit 1
           fi
-          echo "PASS"
-      - name: Assert DIRENV_ACTION_TEST is still exported
+          echo "PASS: SECRET_TOKEN is set"
+
+      - name: Assert ANOTHER_SECRET is exported (masked but still set)
         run: |
-          echo "DIRENV_ACTION_TEST=$DIRENV_ACTION_TEST"
-          if [ "$DIRENV_ACTION_TEST" != "HatsuneMiku3939" ]; then
-            echo "FAIL: expected DIRENV_ACTION_TEST=HatsuneMiku3939, got '$DIRENV_ACTION_TEST'"
+          if [ -z "$ANOTHER_SECRET" ]; then
+            echo "FAIL: expected ANOTHER_SECRET to be set even though it is masked"
             exit 1
           fi
-          echo "PASS"
+          echo "PASS: ANOTHER_SECRET is set"

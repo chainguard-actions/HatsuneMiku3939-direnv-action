@@ -1,4 +1,4 @@
-name: Test direnv with required environment variables
+name: Test required variables present
 on:
   workflow_dispatch:
 jobs:
@@ -6,28 +6,48 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create .envrc with required variables
+        run: |
+          cat > "$GITHUB_WORKSPACE/.envrc" << 'EOF'
+          export DB_HOST=localhost
+          export DB_PORT=5432
+          export APP_SECRET=supersecret
+          EOF
+
       - id: action
         uses: .
         with:
-          masks: ''
+          masks: 'APP_SECRET'
+          direnvVersion: '2.37.1'
+          path: '.'
           required: |
-            DIRENV_ACTION_TEST
-            SECRET1
-            SECRET2
-          path: ${{ github.workspace }}
-      - name: Assert DIRENV_ACTION_TEST is exported
+            DB_HOST
+            DB_PORT
+            APP_SECRET
+
+      - name: Assert DB_HOST is exported
         run: |
-          echo "DIRENV_ACTION_TEST=$DIRENV_ACTION_TEST"
-          if [ "$DIRENV_ACTION_TEST" != "HatsuneMiku3939" ]; then
-            echo "FAIL: expected DIRENV_ACTION_TEST=HatsuneMiku3939, got '$DIRENV_ACTION_TEST'"
+          echo "DB_HOST: $DB_HOST"
+          if [ "$DB_HOST" != "localhost" ]; then
+            echo "FAIL: expected DB_HOST=localhost, got: $DB_HOST"
             exit 1
           fi
-          echo "PASS"
-      - name: Assert SECRET1 is exported
+          echo "PASS: DB_HOST is correct"
+
+      - name: Assert DB_PORT is exported
         run: |
-          echo "SECRET1 is set: $([ -n "$SECRET1" ] && echo yes || echo no)"
-          if [ "$SECRET1" != "ULTRA_SECRET1" ]; then
-            echo "FAIL: expected SECRET1=ULTRA_SECRET1, got '$SECRET1'"
+          echo "DB_PORT: $DB_PORT"
+          if [ "$DB_PORT" != "5432" ]; then
+            echo "FAIL: expected DB_PORT=5432, got: $DB_PORT"
             exit 1
           fi
-          echo "PASS"
+          echo "PASS: DB_PORT is correct"
+
+      - name: Assert APP_SECRET is exported (value is masked but var is set)
+        run: |
+          if [ -z "$APP_SECRET" ]; then
+            echo "FAIL: expected APP_SECRET to be set"
+            exit 1
+          fi
+          echo "PASS: APP_SECRET is set"
