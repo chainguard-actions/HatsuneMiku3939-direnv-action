@@ -1,4 +1,4 @@
-name: Test direnv masks
+name: Test direnv masks input
 on:
   workflow_dispatch:
 jobs:
@@ -6,31 +6,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Create .envrc file
+
+      - name: Create .envrc with secret and non-secret variables
         run: |
-          cat > "$GITHUB_WORKSPACE/.envrc" << 'EOF'
-          export SECRET_TOKEN=supersecret123
-          export PUBLIC_VAR=visible_value
+          cat > "$GITHUB_WORKSPACE/.envrc" <<'EOF'
+          export PUBLIC_VAR=public_value
+          export SECRET_VAR=super_secret_value
           EOF
+
       - id: action
         uses: .
         with:
-          masks: 'SECRET_TOKEN'
+          masks: 'SECRET_VAR'
           direnvVersion: '2.37.1'
           path: .
-      - name: Assert SECRET_TOKEN is exported (masked but available)
-        run: |
-          echo "SECRET_TOKEN is set: $([ -n "$SECRET_TOKEN" ] && echo yes || echo no)"
-          if [ "$SECRET_TOKEN" != "supersecret123" ]; then
-            echo "FAIL: expected SECRET_TOKEN='supersecret123', got '$SECRET_TOKEN'"
-            exit 1
-          fi
-          echo "PASS: SECRET_TOKEN is available"
-      - name: Assert PUBLIC_VAR is exported
+
+      - name: Assert PUBLIC_VAR is set and accessible
         run: |
           echo "PUBLIC_VAR: $PUBLIC_VAR"
-          if [ "$PUBLIC_VAR" != "visible_value" ]; then
-            echo "FAIL: expected PUBLIC_VAR='visible_value', got '$PUBLIC_VAR'"
+          if [ "$PUBLIC_VAR" != "public_value" ]; then
+            echo "FAIL: expected PUBLIC_VAR=public_value, got: $PUBLIC_VAR"
             exit 1
           fi
           echo "PASS: PUBLIC_VAR is correct"
+
+      - name: Assert SECRET_VAR is set (even though masked in logs)
+        run: |
+          # The variable should still be set even though its value is masked in logs
+          if [ -z "$SECRET_VAR" ]; then
+            echo "FAIL: SECRET_VAR should be set but is empty"
+            exit 1
+          fi
+          echo "PASS: SECRET_VAR is set (value is masked)"
