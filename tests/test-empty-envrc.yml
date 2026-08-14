@@ -1,0 +1,31 @@
+name: Test direnv with empty envrc
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create empty .envrc
+        run: |
+          # Create an empty .envrc (no exports)
+          echo "" > "$GITHUB_WORKSPACE/.envrc"
+
+      - id: action
+        uses: .
+        with:
+          masks: ''
+          direnvVersion: '2.37.1'
+          path: .
+
+      - name: Assert action succeeded with empty envrc
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "action outcome: $OUTCOME"
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected action to succeed with empty .envrc, but outcome was '$OUTCOME'"
+            exit 1
+          fi
+          echo "PASS: action succeeded with empty .envrc"
