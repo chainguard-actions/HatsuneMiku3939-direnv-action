@@ -1,0 +1,35 @@
+name: Test required variables present
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          masks: ''
+          required: |
+            REQUIRED_VAR
+            OPTIONAL_VAR
+          path: ${{ github.workspace }}/tests/fixtures/required
+
+      - name: Assert REQUIRED_VAR is exported
+        run: |
+          echo "REQUIRED_VAR: $REQUIRED_VAR"
+          if [ "$REQUIRED_VAR" != "required_value" ]; then
+            echo "FAIL: expected REQUIRED_VAR=required_value, got: $REQUIRED_VAR"
+            exit 1
+          fi
+          echo "PASS: REQUIRED_VAR is correct"
+
+      - name: Assert OPTIONAL_VAR is exported
+        run: |
+          echo "OPTIONAL_VAR: $OPTIONAL_VAR"
+          if [ "$OPTIONAL_VAR" != "optional_value" ]; then
+            echo "FAIL: expected OPTIONAL_VAR=optional_value, got: $OPTIONAL_VAR"
+            exit 1
+          fi
+          echo "PASS: OPTIONAL_VAR is correct"

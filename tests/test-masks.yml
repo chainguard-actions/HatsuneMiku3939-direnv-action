@@ -1,0 +1,36 @@
+name: Test masks input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: direnv
+        uses: .
+        with:
+          masks: 'SECRET1,SECRET2'
+          direnvVersion: '2.37.1'
+          path: .
+      - name: Assert SECRET1 is still exported (masking only hides in logs)
+        run: |
+          if [ -z "$SECRET1" ]; then
+            echo "FAIL: SECRET1 should be exported even when masked"
+            exit 1
+          fi
+          echo "PASS: SECRET1 is exported"
+      - name: Assert SECRET2 is still exported (masking only hides in logs)
+        run: |
+          if [ -z "$SECRET2" ]; then
+            echo "FAIL: SECRET2 should be exported even when masked"
+            exit 1
+          fi
+          echo "PASS: SECRET2 is exported"
+      - name: Assert unmasked variable SECRET3 is exported
+        run: |
+          echo "SECRET3=$SECRET3"
+          if [ "$SECRET3" != "THIS_IS_UNMASKED" ]; then
+            echo "FAIL: expected SECRET3=THIS_IS_UNMASKED, got '$SECRET3'"
+            exit 1
+          fi
+          echo "PASS"
