@@ -1,0 +1,40 @@
+name: Test direnv custom version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create .envrc with test variable
+        run: |
+          cat > "$GITHUB_WORKSPACE/.envrc" << 'EOF'
+          export VERSION_TEST_VAR=version_check_passed
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          masks: ''
+          direnvVersion: '2.36.0'
+          path: .
+
+      - name: Assert VERSION_TEST_VAR is exported using older direnv version
+        run: |
+          echo "VERSION_TEST_VAR: $VERSION_TEST_VAR"
+          if [ "$VERSION_TEST_VAR" != "version_check_passed" ]; then
+            echo "FAIL: expected VERSION_TEST_VAR=version_check_passed, got: $VERSION_TEST_VAR"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert direnv is available and correct version
+        run: |
+          DIRENV_VER=$(direnv version 2>&1 || true)
+          echo "direnv version: $DIRENV_VER"
+          if ! echo "$DIRENV_VER" | grep -q "2.36.0"; then
+            echo "FAIL: expected direnv version 2.36.0, got: $DIRENV_VER"
+            exit 1
+          fi
+          echo "PASS: direnv 2.36.0 is installed"

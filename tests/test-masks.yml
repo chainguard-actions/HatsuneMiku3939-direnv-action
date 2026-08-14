@@ -1,0 +1,40 @@
+name: Test direnv masks feature
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create .envrc with secret variables
+        run: |
+          cat > "$GITHUB_WORKSPACE/.envrc" << 'EOF'
+          export PUBLIC_VAR=visible_value
+          export SECRET_VAR=super_secret_value
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          masks: 'SECRET_VAR'
+          direnvVersion: '2.37.1'
+          path: .
+
+      - name: Assert PUBLIC_VAR is exported and accessible
+        run: |
+          echo "PUBLIC_VAR: $PUBLIC_VAR"
+          if [ "$PUBLIC_VAR" != "visible_value" ]; then
+            echo "FAIL: expected PUBLIC_VAR=visible_value, got: $PUBLIC_VAR"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert SECRET_VAR is exported (value is set even if masked)
+        run: |
+          echo "SECRET_VAR is set: $([ -n "$SECRET_VAR" ] && echo yes || echo no)"
+          if [ "$SECRET_VAR" != "super_secret_value" ]; then
+            echo "FAIL: expected SECRET_VAR=super_secret_value, got: $SECRET_VAR"
+            exit 1
+          fi
+          echo "PASS: SECRET_VAR is set correctly (masked in logs)"

@@ -1,0 +1,53 @@
+name: Test direnv multiple masks
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create .envrc with multiple secret variables
+        run: |
+          cat > "$GITHUB_WORKSPACE/.envrc" << 'EOF'
+          export SECRET_ONE=first_secret
+          export SECRET_TWO=second_secret
+          export SECRET_THREE=third_secret
+          export PUBLIC_ONE=public_value
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          masks: 'SECRET_ONE, SECRET_TWO, SECRET_THREE'
+          direnvVersion: '2.37.1'
+          path: .
+
+      - name: Assert all secret vars are exported with correct values
+        run: |
+          echo "SECRET_ONE is set: $([ -n "$SECRET_ONE" ] && echo yes || echo no)"
+          echo "SECRET_TWO is set: $([ -n "$SECRET_TWO" ] && echo yes || echo no)"
+          echo "SECRET_THREE is set: $([ -n "$SECRET_THREE" ] && echo yes || echo no)"
+
+          if [ "$SECRET_ONE" != "first_secret" ]; then
+            echo "FAIL: expected SECRET_ONE=first_secret, got: $SECRET_ONE"
+            exit 1
+          fi
+          if [ "$SECRET_TWO" != "second_secret" ]; then
+            echo "FAIL: expected SECRET_TWO=second_secret, got: $SECRET_TWO"
+            exit 1
+          fi
+          if [ "$SECRET_THREE" != "third_secret" ]; then
+            echo "FAIL: expected SECRET_THREE=third_secret, got: $SECRET_THREE"
+            exit 1
+          fi
+          echo "PASS: all masked variables are correctly exported"
+
+      - name: Assert PUBLIC_ONE is accessible
+        run: |
+          echo "PUBLIC_ONE: $PUBLIC_ONE"
+          if [ "$PUBLIC_ONE" != "public_value" ]; then
+            echo "FAIL: expected PUBLIC_ONE=public_value, got: $PUBLIC_ONE"
+            exit 1
+          fi
+          echo "PASS"

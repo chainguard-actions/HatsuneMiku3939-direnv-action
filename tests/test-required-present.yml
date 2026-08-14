@@ -1,0 +1,43 @@
+name: Test direnv required vars - present variable succeeds
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create .envrc with the required variable
+        run: |
+          cat > "$GITHUB_WORKSPACE/.envrc" << 'EOF'
+          export REQUIRED_VAR=required_value
+          export ANOTHER_REQUIRED=another_value
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          masks: ''
+          required: |
+            REQUIRED_VAR
+            ANOTHER_REQUIRED
+          direnvVersion: '2.37.1'
+          path: .
+
+      - name: Assert REQUIRED_VAR is exported
+        run: |
+          echo "REQUIRED_VAR: $REQUIRED_VAR"
+          if [ "$REQUIRED_VAR" != "required_value" ]; then
+            echo "FAIL: expected REQUIRED_VAR=required_value, got: $REQUIRED_VAR"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert ANOTHER_REQUIRED is exported
+        run: |
+          echo "ANOTHER_REQUIRED: $ANOTHER_REQUIRED"
+          if [ "$ANOTHER_REQUIRED" != "another_value" ]; then
+            echo "FAIL: expected ANOTHER_REQUIRED=another_value, got: $ANOTHER_REQUIRED"
+            exit 1
+          fi
+          echo "PASS"

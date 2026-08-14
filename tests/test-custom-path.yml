@@ -1,0 +1,41 @@
+name: Test direnv custom path
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create subdirectory with .envrc
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/mysubdir"
+          cat > "$GITHUB_WORKSPACE/mysubdir/.envrc" << 'EOF'
+          export SUBDIR_VAR=from_subdir
+          export SUBDIR_SECRET=subdir_secret_value
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          masks: 'SUBDIR_SECRET'
+          direnvVersion: '2.37.1'
+          path: mysubdir
+
+      - name: Assert SUBDIR_VAR is exported from subdirectory .envrc
+        run: |
+          echo "SUBDIR_VAR: $SUBDIR_VAR"
+          if [ "$SUBDIR_VAR" != "from_subdir" ]; then
+            echo "FAIL: expected SUBDIR_VAR=from_subdir, got: $SUBDIR_VAR"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert SUBDIR_SECRET is exported (masked in logs)
+        run: |
+          echo "SUBDIR_SECRET is set: $([ -n "$SUBDIR_SECRET" ] && echo yes || echo no)"
+          if [ "$SUBDIR_SECRET" != "subdir_secret_value" ]; then
+            echo "FAIL: expected SUBDIR_SECRET=subdir_secret_value, got: $SUBDIR_SECRET"
+            exit 1
+          fi
+          echo "PASS: SUBDIR_SECRET is set correctly"
