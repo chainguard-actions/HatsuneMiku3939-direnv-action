@@ -1,0 +1,40 @@
+name: Test custom direnv version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: direnv
+        name: Run direnv action with an explicit version
+        uses: .
+        with:
+          masks: ''
+          direnvVersion: '2.37.1'
+          direnvChecksum: '1f1b93dd6f38523fde26dfac96151ef9d31a374e3005cd3345fb93555ae0c9b5'
+          path: tests/fixtures/basic
+
+      - name: Assert MY_TEST_VAR is exported with explicit direnv version
+        run: |
+          echo "MY_TEST_VAR: $MY_TEST_VAR"
+          if [ "$MY_TEST_VAR" != "hello_world" ]; then
+            echo "FAIL: expected MY_TEST_VAR=hello_world, got '$MY_TEST_VAR'"
+            exit 1
+          fi
+          echo "PASS: MY_TEST_VAR is correct with explicit direnv version"
+
+      - name: Assert direnv binary is available and correct version
+        run: |
+          DIRENV_VER=$(direnv version 2>&1)
+          echo "direnv version: $DIRENV_VER"
+          if [ -z "$DIRENV_VER" ]; then
+            echo "FAIL: direnv version output is empty"
+            exit 1
+          fi
+          if [ "$DIRENV_VER" != "2.37.1" ]; then
+            echo "FAIL: expected direnv version 2.37.1, got '$DIRENV_VER'"
+            exit 1
+          fi
+          echo "PASS: direnv 2.37.1 is installed and available"
