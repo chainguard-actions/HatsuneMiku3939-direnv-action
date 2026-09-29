@@ -1,0 +1,48 @@
+name: Test basic usage
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run direnv-action on root .envrc
+        id: action
+        uses: .
+        with:
+          masks: ''
+          path: .
+
+      - name: Assert DIRENV_ACTION_TEST is exported
+        env:
+          ACTUAL: ${{ env.DIRENV_ACTION_TEST }}
+        run: |
+          echo "DIRENV_ACTION_TEST: $ACTUAL"
+          if [ "$ACTUAL" != "HatsuneMiku3939" ]; then
+            echo "FAIL: expected 'HatsuneMiku3939', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert SECRET1 is exported
+        env:
+          ACTUAL: ${{ env.SECRET1 }}
+        run: |
+          echo "SECRET1 is set: $([ -n "$ACTUAL" ] && echo yes || echo no)"
+          if [ "$ACTUAL" != "ULTRA_SECRET1" ]; then
+            echo "FAIL: expected 'ULTRA_SECRET1', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert SECRET2 is exported
+        env:
+          ACTUAL: ${{ env.SECRET2 }}
+        run: |
+          echo "SECRET2 is set: $([ -n "$ACTUAL" ] && echo yes || echo no)"
+          if [ "$ACTUAL" != "VERY_SECRET2" ]; then
+            echo "FAIL: expected 'VERY_SECRET2', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"

@@ -1,0 +1,43 @@
+name: Test required vars - success case
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run direnv-action with required vars that are present
+        id: action
+        uses: .
+        with:
+          masks: ''
+          path: .
+          required: |
+            DIRENV_ACTION_TEST
+            SECRET1
+            SECRET2
+
+      - name: Assert action succeeded and required vars are exported
+        env:
+          DIRENV_ACTION_TEST_VAL: ${{ env.DIRENV_ACTION_TEST }}
+          SECRET1_VAL: ${{ env.SECRET1 }}
+          SECRET2_VAL: ${{ env.SECRET2 }}
+        run: |
+          echo "DIRENV_ACTION_TEST: $DIRENV_ACTION_TEST_VAL"
+          echo "SECRET1 is set: $([ -n "$SECRET1_VAL" ] && echo yes || echo no)"
+          echo "SECRET2 is set: $([ -n "$SECRET2_VAL" ] && echo yes || echo no)"
+
+          if [ "$DIRENV_ACTION_TEST_VAL" != "HatsuneMiku3939" ]; then
+            echo "FAIL: DIRENV_ACTION_TEST expected 'HatsuneMiku3939', got '$DIRENV_ACTION_TEST_VAL'"
+            exit 1
+          fi
+          if [ -z "$SECRET1_VAL" ]; then
+            echo "FAIL: SECRET1 should be exported"
+            exit 1
+          fi
+          if [ -z "$SECRET2_VAL" ]; then
+            echo "FAIL: SECRET2 should be exported"
+            exit 1
+          fi
+          echo "PASS: all required vars are exported"

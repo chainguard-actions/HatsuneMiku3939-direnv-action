@@ -1,0 +1,36 @@
+name: Test direnv version selection
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run direnv-action with explicit direnv version
+        id: action
+        uses: .
+        with:
+          masks: ''
+          path: .
+          direnvVersion: '2.37.1'
+
+      - name: Assert direnv is installed and env vars are exported
+        env:
+          ACTUAL: ${{ env.DIRENV_ACTION_TEST }}
+        run: |
+          echo "DIRENV_ACTION_TEST: $ACTUAL"
+          # Verify direnv is on PATH and the correct version
+          which direnv
+          INSTALLED_VERSION=$(direnv version)
+          echo "Installed direnv version: $INSTALLED_VERSION"
+          if [ "$INSTALLED_VERSION" != "2.37.1" ]; then
+            echo "FAIL: expected direnv version '2.37.1', got '$INSTALLED_VERSION'"
+            exit 1
+          fi
+          # Verify env vars were exported
+          if [ "$ACTUAL" != "HatsuneMiku3939" ]; then
+            echo "FAIL: expected DIRENV_ACTION_TEST='HatsuneMiku3939', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: correct direnv version installed and env vars exported"

@@ -1,0 +1,37 @@
+name: Test subdirectory path
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run direnv-action on child/ .envrc
+        id: action
+        uses: .
+        with:
+          masks: ''
+          path: child
+
+      - name: Assert CHILD_ENV is exported from child directory
+        env:
+          ACTUAL: ${{ env.CHILD_ENV }}
+        run: |
+          echo "CHILD_ENV: $ACTUAL"
+          if [ "$ACTUAL" != "DEFINED_IN_CHILD_DIRECTORY" ]; then
+            echo "FAIL: expected 'DEFINED_IN_CHILD_DIRECTORY', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert DIRENV_ACTION_TEST is also exported (via source_up)
+        env:
+          ACTUAL: ${{ env.DIRENV_ACTION_TEST }}
+        run: |
+          echo "DIRENV_ACTION_TEST: $ACTUAL"
+          if [ "$ACTUAL" != "HatsuneMiku3939" ]; then
+            echo "FAIL: expected 'HatsuneMiku3939' from parent .envrc via source_up, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"

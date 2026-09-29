@@ -1,0 +1,56 @@
+name: Test masks input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run direnv-action with masks for SECRET1 and SECRET2
+        id: action
+        uses: .
+        with:
+          masks: 'SECRET1, SECRET2'
+          path: .
+
+      - name: Assert action succeeded and SECRET1 is still accessible
+        env:
+          ACTUAL: ${{ env.SECRET1 }}
+        run: |
+          echo "SECRET1 is set: $([ -n "$ACTUAL" ] && echo yes || echo no)"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: SECRET1 should be exported even when masked"
+            exit 1
+          fi
+          if [ "$ACTUAL" != "ULTRA_SECRET1" ]; then
+            echo "FAIL: expected 'ULTRA_SECRET1', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: SECRET1 is exported and masked"
+
+      - name: Assert SECRET2 is still accessible after masking
+        env:
+          ACTUAL: ${{ env.SECRET2 }}
+        run: |
+          echo "SECRET2 is set: $([ -n "$ACTUAL" ] && echo yes || echo no)"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: SECRET2 should be exported even when masked"
+            exit 1
+          fi
+          if [ "$ACTUAL" != "VERY_SECRET2" ]; then
+            echo "FAIL: expected 'VERY_SECRET2', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: SECRET2 is exported and masked"
+
+      - name: Assert SECRET3 (unmasked) is also exported
+        env:
+          ACTUAL: ${{ env.SECRET3 }}
+        run: |
+          echo "SECRET3: $ACTUAL"
+          if [ "$ACTUAL" != "THIS_IS_UNMASKED" ]; then
+            echo "FAIL: expected 'THIS_IS_UNMASKED', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: SECRET3 is exported without masking"
