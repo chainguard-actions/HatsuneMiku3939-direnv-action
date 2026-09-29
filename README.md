@@ -21,6 +21,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | v1.4.4 | [`v1.4.4`](https://github.com/chainguard-actions/HatsuneMiku3939-direnv-action/tree/v1.4.4) | [`6b1a9dc`](https://github.com/HatsuneMiku3939/direnv-action/commit/6b1a9dcac14481f9053747c0612d8a1fbbd22104) |
 | v1.4.5 | [`v1.4.5`](https://github.com/chainguard-actions/HatsuneMiku3939-direnv-action/tree/v1.4.5) | [`6204df4`](https://github.com/HatsuneMiku3939/direnv-action/commit/6204df45a0179b54cdc2b51b22ac93d728ca6e4d) |
 | v1.4.6 | [`v1.4.6`](https://github.com/chainguard-actions/HatsuneMiku3939-direnv-action/tree/v1.4.6) | [`309e4f7`](https://github.com/HatsuneMiku3939/direnv-action/commit/309e4f7db8e09bb692b133ff7b6c279d04a4811b) |
+| v1.4.7 | [`v1.4.7`](https://github.com/chainguard-actions/HatsuneMiku3939-direnv-action/tree/v1.4.7) | [`f57ee34`](https://github.com/HatsuneMiku3939/direnv-action/commit/f57ee34c28f1fe6a74d22e5e1b51e8bbbba1c389) |
 
 ## Privacy
 
