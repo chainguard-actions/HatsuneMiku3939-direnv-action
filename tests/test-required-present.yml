@@ -1,0 +1,43 @@
+name: Test required variables present
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create .envrc with required variables
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/tests/fixtures/required-present"
+          printf 'export REQUIRED_VAR=required_value\nexport OPTIONAL_VAR=optional_value\n' > "$GITHUB_WORKSPACE/tests/fixtures/required-present/.envrc"
+
+      - id: action
+        uses: .
+        with:
+          masks: ''
+          required: |
+            REQUIRED_VAR
+          path: tests/fixtures/required-present
+
+      - name: Assert REQUIRED_VAR is exported
+        env:
+          ACTUAL: ${{ env.REQUIRED_VAR }}
+        run: |
+          echo "actual REQUIRED_VAR: $ACTUAL"
+          if [ "$ACTUAL" != "required_value" ]; then
+            echo "FAIL: expected REQUIRED_VAR='required_value', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: REQUIRED_VAR is correctly set"
+
+      - name: Assert OPTIONAL_VAR is also exported
+        env:
+          ACTUAL: ${{ env.OPTIONAL_VAR }}
+        run: |
+          echo "actual OPTIONAL_VAR: $ACTUAL"
+          if [ "$ACTUAL" != "optional_value" ]; then
+            echo "FAIL: expected OPTIONAL_VAR='optional_value', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: OPTIONAL_VAR is correctly set"

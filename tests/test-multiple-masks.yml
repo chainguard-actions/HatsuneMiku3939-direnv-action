@@ -1,0 +1,43 @@
+name: Test multiple masks
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create .envrc with multiple secret variables
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/tests/fixtures/multiple-masks"
+          printf 'export SECRET_ONE=first_secret\nexport SECRET_TWO=second_secret\nexport PUBLIC_ONE=public_value\n' > "$GITHUB_WORKSPACE/tests/fixtures/multiple-masks/.envrc"
+
+      - id: action
+        uses: .
+        with:
+          masks: 'SECRET_ONE, SECRET_TWO'
+          path: tests/fixtures/multiple-masks
+
+      - name: Assert all variables are exported
+        env:
+          S1: ${{ env.SECRET_ONE }}
+          S2: ${{ env.SECRET_TWO }}
+          P1: ${{ env.PUBLIC_ONE }}
+        run: |
+          echo "SECRET_ONE: ***"
+          echo "SECRET_TWO: ***"
+          echo "PUBLIC_ONE: $P1"
+
+          if [ "$S1" != "first_secret" ]; then
+            echo "FAIL: SECRET_ONE not correctly exported"
+            exit 1
+          fi
+          if [ "$S2" != "second_secret" ]; then
+            echo "FAIL: SECRET_TWO not correctly exported"
+            exit 1
+          fi
+          if [ "$P1" != "public_value" ]; then
+            echo "FAIL: PUBLIC_ONE not correctly exported, got '$P1'"
+            exit 1
+          fi
+          echo "PASS: all variables exported correctly with multiple masks"

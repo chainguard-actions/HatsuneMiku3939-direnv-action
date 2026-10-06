@@ -1,0 +1,41 @@
+name: Test basic usage
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create .envrc for testing
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/tests/fixtures/basic"
+          printf 'export MY_VAR=hello_world\nexport ANOTHER_VAR=foobar\n' > "$GITHUB_WORKSPACE/tests/fixtures/basic/.envrc"
+
+      - id: action
+        uses: .
+        with:
+          masks: ''
+          path: tests/fixtures/basic
+
+      - name: Assert MY_VAR is exported
+        env:
+          ACTUAL: ${{ env.MY_VAR }}
+        run: |
+          echo "actual MY_VAR: $ACTUAL"
+          if [ "$ACTUAL" != "hello_world" ]; then
+            echo "FAIL: expected MY_VAR='hello_world', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: MY_VAR is correctly set"
+
+      - name: Assert ANOTHER_VAR is exported
+        env:
+          ACTUAL: ${{ env.ANOTHER_VAR }}
+        run: |
+          echo "actual ANOTHER_VAR: $ACTUAL"
+          if [ "$ACTUAL" != "foobar" ]; then
+            echo "FAIL: expected ANOTHER_VAR='foobar', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: ANOTHER_VAR is correctly set"

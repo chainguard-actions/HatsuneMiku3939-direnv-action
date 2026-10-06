@@ -1,0 +1,42 @@
+name: Test custom direnv version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create .envrc for testing
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/tests/fixtures/custom-version"
+          printf 'export VERSION_TEST_VAR=custom_version_works\n' > "$GITHUB_WORKSPACE/tests/fixtures/custom-version/.envrc"
+
+      - id: action
+        uses: .
+        with:
+          masks: ''
+          direnvVersion: '2.36.0'
+          path: tests/fixtures/custom-version
+
+      - name: Assert VERSION_TEST_VAR is exported with custom direnv version
+        env:
+          ACTUAL: ${{ env.VERSION_TEST_VAR }}
+        run: |
+          echo "actual VERSION_TEST_VAR: $ACTUAL"
+          if [ "$ACTUAL" != "custom_version_works" ]; then
+            echo "FAIL: expected VERSION_TEST_VAR='custom_version_works', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: custom direnv version works correctly"
+
+      - name: Assert direnv is on PATH and correct version
+        run: |
+          echo "direnv version: $(direnv version)"
+          INSTALLED_VERSION=$(direnv version 2>&1 | head -1)
+          echo "installed version: $INSTALLED_VERSION"
+          if ! echo "$INSTALLED_VERSION" | grep -q "2.36.0"; then
+            echo "FAIL: expected direnv version 2.36.0, got '$INSTALLED_VERSION'"
+            exit 1
+          fi
+          echo "PASS: direnv 2.36.0 is installed"
