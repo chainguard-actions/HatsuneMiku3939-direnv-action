@@ -23,6 +23,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | v1.4.6 | [`v1.4.6`](https://github.com/chainguard-actions/HatsuneMiku3939-direnv-action/tree/v1.4.6) | [`309e4f7`](https://github.com/HatsuneMiku3939/direnv-action/commit/309e4f7db8e09bb692b133ff7b6c279d04a4811b) | [`HARDENING.md`](https://github.com/chainguard-actions/HatsuneMiku3939-direnv-action/blob/v1.4.6/HARDENING.md) |
 | v1.4.7 | [`v1.4.7`](https://github.com/chainguard-actions/HatsuneMiku3939-direnv-action/tree/v1.4.7) | [`f57ee34`](https://github.com/HatsuneMiku3939/direnv-action/commit/f57ee34c28f1fe6a74d22e5e1b51e8bbbba1c389) | [`HARDENING.md`](https://github.com/chainguard-actions/HatsuneMiku3939-direnv-action/blob/v1.4.7/HARDENING.md) |
 | v1.4.8 | [`v1.4.8`](https://github.com/chainguard-actions/HatsuneMiku3939-direnv-action/tree/v1.4.8) | [`62a96f4`](https://github.com/HatsuneMiku3939/direnv-action/commit/62a96f40481d3423bc43bd8b7e2bd45e95e6e5c8) | [`HARDENING.md`](https://github.com/chainguard-actions/HatsuneMiku3939-direnv-action/blob/v1.4.8/HARDENING.md) |
+| v1.4.9 | [`v1.4.9`](https://github.com/chainguard-actions/HatsuneMiku3939-direnv-action/tree/v1.4.9) | [`3581e57`](https://github.com/HatsuneMiku3939/direnv-action/commit/3581e576dcd560ededf321249569a85e406fc25f) | [`HARDENING.md`](https://github.com/chainguard-actions/HatsuneMiku3939-direnv-action/blob/v1.4.9/HARDENING.md) |
 
 ## Privacy
 
