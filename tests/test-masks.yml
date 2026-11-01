@@ -1,0 +1,28 @@
+name: Test masks input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          path: tests/fixtures/basic
+          masks: SECRET1, SECRET2, DOES_NOT_EXIST
+      - name: Assert masked variables still exported
+        run: |
+          if [ "$SECRET1" != "ULTRA_SECRET1" ]; then
+            echo "FAIL: SECRET1 not exported"
+            exit 1
+          fi
+          if [ "$SECRET2" != "VERY_SECRET2" ]; then
+            echo "FAIL: SECRET2 not exported"
+            exit 1
+          fi
+          if [ -n "${DOES_NOT_EXIST:-}" ]; then
+            echo "FAIL: DOES_NOT_EXIST unexpectedly set"
+            exit 1
+          fi
+          echo "PASS"

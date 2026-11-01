@@ -1,0 +1,23 @@
+name: Test PATH from envrc
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          path: tests/fixtures/pathdir
+      - name: Assert PATH contains fixture bin directory
+        run: |
+          echo "PATH=$PATH"
+          if [ "$PATHDIR_MARKER" != "yes" ]; then
+            echo "FAIL: PATHDIR_MARKER not exported"
+            exit 1
+          fi
+          case ":$PATH:" in
+            *"tests/fixtures/pathdir/bin"*) echo "PASS: PATH contains fixture bin" ;;
+            *) echo "FAIL: PATH missing fixture bin"; exit 1 ;;
+          esac

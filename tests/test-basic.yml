@@ -1,0 +1,33 @@
+name: Test basic usage
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          path: tests/fixtures/basic
+      - name: Assert variables exported
+        run: |
+          echo "DIRENV_ACTION_TEST=$DIRENV_ACTION_TEST"
+          echo "FIXTURE_GREETING=$FIXTURE_GREETING"
+          if [ "$DIRENV_ACTION_TEST" != "HatsuneMiku3939" ]; then
+            echo "FAIL: DIRENV_ACTION_TEST not exported"
+            exit 1
+          fi
+          if [ "$FIXTURE_GREETING" != "hello world" ]; then
+            echo "FAIL: FIXTURE_GREETING not exported"
+            exit 1
+          fi
+          if [ "$SECRET3" != "THIS_IS_UNMASKED" ]; then
+            echo "FAIL: SECRET3 not exported"
+            exit 1
+          fi
+          if ! command -v direnv >/dev/null 2>&1; then
+            echo "FAIL: direnv not on PATH"
+            exit 1
+          fi
+          echo "PASS"
