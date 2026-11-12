@@ -1,0 +1,45 @@
+name: Test basic usage with fixture path
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          path: tests/fixtures/basic
+          masks: FIXTURE_SECRET
+      - name: Assert exported variables
+        run: |
+          echo "FIXTURE_FOO=$FIXTURE_FOO"
+          echo "FIXTURE_PUBLIC=$FIXTURE_PUBLIC"
+          if [ "$FIXTURE_FOO" != "bar" ]; then
+            echo "FAIL: FIXTURE_FOO expected 'bar'"
+            exit 1
+          fi
+          if [ "$FIXTURE_PUBLIC" != "public-value" ]; then
+            echo "FAIL: FIXTURE_PUBLIC expected 'public-value'"
+            exit 1
+          fi
+          if [ "$FIXTURE_SECRET" != "super-secret-value" ]; then
+            echo "FAIL: FIXTURE_SECRET not exported correctly"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert PATH extended
+        run: |
+          echo "PATH=$PATH"
+          case "$PATH" in
+            *tests/fixtures/basic/fixture-bin*) echo "PASS" ;;
+            *) echo "FAIL: PATH does not contain fixture-bin"; exit 1 ;;
+          esac
+      - name: Assert direnv available on PATH
+        run: |
+          if ! command -v direnv >/dev/null 2>&1; then
+            echo "FAIL: direnv not on PATH"
+            exit 1
+          fi
+          direnv version
+          echo "PASS"

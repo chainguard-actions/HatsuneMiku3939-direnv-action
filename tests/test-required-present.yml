@@ -1,0 +1,30 @@
+name: Test required variables present
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          path: tests/fixtures/basic
+          masks: ''
+          required: |
+            FIXTURE_FOO
+            FIXTURE_PUBLIC
+      - name: Assert step succeeded and vars exported
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected success"
+            exit 1
+          fi
+          if [ "$FIXTURE_FOO" != "bar" ] || [ "$FIXTURE_PUBLIC" != "public-value" ]; then
+            echo "FAIL: required vars not exported"
+            exit 1
+          fi
+          echo "PASS"

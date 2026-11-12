@@ -1,0 +1,33 @@
+name: Test default path (repository root .envrc)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          masks: SECRET1, SECRET2
+      - name: Assert root .envrc variables exported
+        run: |
+          echo "DIRENV_ACTION_TEST=$DIRENV_ACTION_TEST"
+          echo "SECRET3=$SECRET3"
+          if [ "$DIRENV_ACTION_TEST" != "HatsuneMiku3939" ]; then
+            echo "FAIL: DIRENV_ACTION_TEST expected 'HatsuneMiku3939'"
+            exit 1
+          fi
+          if [ "$SECRET1" != "ULTRA_SECRET1" ]; then
+            echo "FAIL: SECRET1 mismatch"
+            exit 1
+          fi
+          if [ "$SECRET2" != "VERY_SECRET2" ]; then
+            echo "FAIL: SECRET2 mismatch"
+            exit 1
+          fi
+          if [ "$SECRET3" != "THIS_IS_UNMASKED" ]; then
+            echo "FAIL: SECRET3 mismatch"
+            exit 1
+          fi
+          echo "PASS"
