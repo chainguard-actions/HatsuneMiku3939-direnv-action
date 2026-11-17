@@ -1,0 +1,25 @@
+name: Test child path with source_up
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          path: child
+      - name: Assert child and parent variables exported
+        run: |
+          echo "CHILD_ENV=$CHILD_ENV"
+          echo "DIRENV_ACTION_TEST=$DIRENV_ACTION_TEST"
+          if [ "$CHILD_ENV" != "DEFINED_IN_CHILD_DIRECTORY" ]; then
+            echo "FAIL: CHILD_ENV not exported"
+            exit 1
+          fi
+          if [ "$DIRENV_ACTION_TEST" != "HatsuneMiku3939" ]; then
+            echo "FAIL: parent variable not inherited via source_up"
+            exit 1
+          fi
+          echo "PASS"

@@ -1,0 +1,46 @@
+name: Test basic usage (root .envrc)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          masks: SECRET1, SECRET2
+      - name: Assert exported variables
+        run: |
+          echo "DIRENV_ACTION_TEST=$DIRENV_ACTION_TEST"
+          if [ "$DIRENV_ACTION_TEST" != "HatsuneMiku3939" ]; then
+            echo "FAIL: DIRENV_ACTION_TEST not exported"
+            exit 1
+          fi
+          if [ "$SECRET3" != "THIS_IS_UNMASKED" ]; then
+            echo "FAIL: SECRET3 not exported correctly: $SECRET3"
+            exit 1
+          fi
+          if [ "$SECRET1" != "ULTRA_SECRET1" ] || [ "$SECRET2" != "VERY_SECRET2" ]; then
+            echo "FAIL: SECRET1/SECRET2 not exported correctly"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert PATH includes bin directory
+        run: |
+          echo "PATH=$PATH"
+          BASE="$(basename "$GITHUB_WORKSPACE")"
+          if ! echo "$PATH" | tr ':' '\n' | grep -q "/$BASE/bin$"; then
+            echo "FAIL: <workspace>/bin not found in PATH"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert direnv installed on PATH
+        run: |
+          command -v direnv
+          direnv version
+          if [ "$(direnv version)" != "2.37.1" ]; then
+            echo "FAIL: unexpected direnv version"
+            exit 1
+          fi
+          echo "PASS"
