@@ -4,8 +4,13 @@
   "version": "v1.4.10",
   "commit_sha": "004b0b691ec69a8bd9492fe1a2b17503ebf9a4be",
   "url": "https://github.com/HatsuneMiku3939/direnv-action",
-  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "policy_sha": "374911c4be584df24e6da57af2d990570ef0f859",
   "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
   "test_agent_version": "2",
-  "harden_agent_version": "2"
+  "harden_agent_version": "2",
+  "dist_artifact": {
+    "gcs_uri": "gs://patch-actions-node-artifacts/dist-artifacts/HatsuneMiku3939/direnv-action/v1.4.10/sha256-d3ead38d8a79a4c6576750d5fbd8e840653ee39ca1ad84fec2377724dbd319fc.tar.gz",
+    "sha256": "d3ead38d8a79a4c6576750d5fbd8e840653ee39ca1ad84fec2377724dbd319fc",
+    "size_bytes": 1432948
+  }
 }
